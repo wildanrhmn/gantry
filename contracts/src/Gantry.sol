@@ -9,11 +9,15 @@ import {SwapParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
 import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "@uniswap/v4-core/src/types/BeforeSwapDelta.sol";
 import {LPFeeLibrary} from "@uniswap/v4-core/src/libraries/LPFeeLibrary.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+import {PoolId, PoolIdLibrary} from "@uniswap/v4-core/src/types/PoolId.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ITierOracle} from "./interfaces/ITierOracle.sol";
 
 /// @notice Prices each swap by the caller's behaviour tier. Nobody is ever blocked;
 /// toxic flow simply pays more, and the surplus stays with the pool's LPs.
 contract Gantry is BaseHook {
+    using PoolIdLibrary for PoolKey;
+
     uint256 private constant TIER_COUNT = 4;
 
     /// @dev Hard ceiling on anything this hook can charge, so a bad tier table cannot confiscate a trade.
@@ -56,18 +60,48 @@ contract Gantry is BaseHook {
         });
     }
 
-    /// @dev `sender` is whoever called the PoolManager. MEV bots call from their own
-    /// contracts and are therefore scored individually; swaps arriving through a shared
-    /// router are indistinguishable to us and fall to the default tier.
-    function _beforeSwap(address sender, PoolKey calldata, SwapParams calldata, bytes calldata)
+    function _beforeSwap(address sender, PoolKey calldata key, SwapParams calldata, bytes calldata hookData)
         internal
         override
         returns (bytes4, BeforeSwapDelta, uint24)
     {
-        uint8 tier = _tierOf(sender);
+        address payer = _resolvePayer(sender, key, hookData);
+        uint8 tier = _tierOf(payer);
         uint24 fee = tierFee[tier];
-        emit Tolled(sender, tier, fee);
+        emit Tolled(payer, tier, fee);
         return (IHooks.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);
+    }
+
+    /// @notice Digest a trader signs to be priced on their own history rather than their router's.
+    /// Bound to this hook, this chain and this pool so a signature cannot be replayed elsewhere.
+    function attestationDigest(address trader, PoolKey calldata key, uint256 deadline) public view returns (bytes32) {
+        return keccak256(abi.encode(block.chainid, address(this), PoolId.unwrap(key.toId()), trader, deadline));
+    }
+
+    /// @dev Exposed only so the decode below can be attempted inside a try/catch.
+    function decodeAttestation(bytes calldata data) external pure returns (address, uint256, bytes memory) {
+        return abi.decode(data, (address, uint256, bytes));
+    }
+
+    /// @dev `sender` is whoever called the PoolManager, which for a shared router is the router
+    /// itself. A trader behind one can sign an attestation to be scored as themselves. Anything
+    /// malformed, expired or unsigned quietly falls back to pricing the caller.
+    function _resolvePayer(address sender, PoolKey calldata key, bytes calldata hookData)
+        private
+        view
+        returns (address)
+    {
+        if (hookData.length == 0) return sender;
+
+        try this.decodeAttestation(hookData) returns (address trader, uint256 deadline, bytes memory signature) {
+            if (block.timestamp > deadline) return sender;
+            (address recovered, ECDSA.RecoverError err,) =
+                ECDSA.tryRecover(attestationDigest(trader, key, deadline), signature);
+            if (err != ECDSA.RecoverError.NoError || recovered != trader) return sender;
+            return trader;
+        } catch {
+            return sender;
+        }
     }
 
     /// @dev A missing or misbehaving oracle must never be able to halt the pool,

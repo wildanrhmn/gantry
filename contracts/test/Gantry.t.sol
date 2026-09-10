@@ -59,13 +59,23 @@ contract GantryTest is Test, Deployers {
         IERC20Minimal(Currency.unwrap(currency1)).approve(address(caller), type(uint256).max);
     }
 
+    function _attestation(uint256 pk, uint256 deadline) private view returns (bytes memory) {
+        address trader = vm.addr(pk);
+        (uint8 v, bytes32 r, bytes32 sVal) = vm.sign(pk, gantry.attestationDigest(trader, key, deadline));
+        return abi.encode(trader, deadline, abi.encodePacked(r, sVal, v));
+    }
+
     function _swapVia(PoolSwapTest caller) private returns (uint256 received) {
+        return _swapVia(caller, ZERO_BYTES);
+    }
+
+    function _swapVia(PoolSwapTest caller, bytes memory hookData) private returns (uint256 received) {
         uint256 before = IERC20Minimal(Currency.unwrap(currency1)).balanceOf(address(this));
         caller.swap(
             key,
             SwapParams({zeroForOne: true, amountSpecified: SWAP_AMOUNT, sqrtPriceLimitX96: MIN_PRICE_LIMIT}),
             PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
-            ZERO_BYTES
+            hookData
         );
         received = IERC20Minimal(Currency.unwrap(currency1)).balanceOf(address(this)) - before;
     }
@@ -118,5 +128,50 @@ contract GantryTest is Test, Deployers {
         address other = address(uint160(Hooks.BEFORE_SWAP_FLAG ^ (0x5555 << 144)));
         vm.expectRevert(Gantry.FeeTooHigh.selector);
         deployCodeTo("Gantry.sol:Gantry", abi.encode(manager, ITierOracle(address(oracle)), tooHigh), other);
+    }
+
+    /// A trader behind a shared router should be priced on their own history, not the router's.
+    function test_attestedTraderIsPricedInsteadOfRouter() public {
+        uint256 pk = 0xA11CE;
+        oracle.setTier(vm.addr(pk), oracle.TIER_CLEAN());
+
+        uint256 unattested = _swapVia(cleanCaller);
+        uint256 attested = _swapVia(cleanCaller, _attestation(pk, block.timestamp + 1 hours));
+
+        assertGt(attested, unattested, "attested clean trader should pay less than an unknown router");
+    }
+
+    function test_expiredAttestationFallsBackToCaller() public {
+        uint256 pk = 0xA11CE;
+        oracle.setTier(vm.addr(pk), oracle.TIER_CLEAN());
+        bytes memory att = _attestation(pk, block.timestamp + 1 hours);
+
+        vm.warp(block.timestamp + 2 hours);
+
+        uint256 baseline = _swapVia(cleanCaller);
+        uint256 expired = _swapVia(cleanCaller, att);
+        assertApproxEqRel(expired, baseline, 0.01e18, "expired attestation must not grant the clean tier");
+    }
+
+    /// Signing for an address you do not control must not buy you its tier.
+    function test_attestationSignedByWrongKeyIsIgnored() public {
+        uint256 victimPk = 0xA11CE;
+        uint256 attackerPk = 0xBAD;
+        address victim = vm.addr(victimPk);
+        oracle.setTier(victim, oracle.TIER_CLEAN());
+
+        uint256 deadline = block.timestamp + 1 hours;
+        (uint8 v, bytes32 r, bytes32 sVal) = vm.sign(attackerPk, gantry.attestationDigest(victim, key, deadline));
+        bytes memory forged = abi.encode(victim, deadline, abi.encodePacked(r, sVal, v));
+
+        uint256 baseline = _swapVia(cleanCaller);
+        uint256 forgedOut = _swapVia(cleanCaller, forged);
+        assertApproxEqRel(forgedOut, baseline, 0.01e18, "forged attestation must not grant the clean tier");
+    }
+
+    /// Malformed hook data must never be able to halt the pool.
+    function test_garbageHookDataDoesNotRevert() public {
+        uint256 out = _swapVia(cleanCaller, hex"deadbeef");
+        assertGt(out, 0, "swap must survive undecodable hook data");
     }
 }
