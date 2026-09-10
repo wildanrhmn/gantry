@@ -15,12 +15,24 @@ contract TierOracle is ITierOracle {
     /// @dev Stored as tier+1 so an empty slot means "never scored" without a second lookup.
     mapping(address => uint8) private _stored;
 
+    /// @dev Writes tiers. Handed to the CRE receiver once a workflow is live.
     address public writer;
+
+    /// @dev Manages the writer and the shared list. Kept separate so handing tier
+    /// writing to a workflow does not also hand over who is protected from it.
+    address public admin;
+
+    /// @dev Addresses many unrelated people trade through. Pricing one of these would
+    /// charge every trader behind it, so they are pinned to the default tier.
+    mapping(address => bool) public shared;
 
     event TierSet(address indexed account, uint8 tier);
     event WriterSet(address indexed writer);
+    event SharedSet(address indexed account, bool isShared);
+    event AdminSet(address indexed admin);
 
     error NotWriter();
+    error NotAdmin();
     error BadTier();
     error LengthMismatch();
     error ZeroAddress();
@@ -28,11 +40,17 @@ contract TierOracle is ITierOracle {
     constructor(address writer_) {
         if (writer_ == address(0)) revert ZeroAddress();
         writer = writer_;
+        admin = writer_;
         emit WriterSet(writer_);
     }
 
     modifier onlyWriter() {
         if (msg.sender != writer) revert NotWriter();
+        _;
+    }
+
+    modifier onlyAdmin() {
+        if (msg.sender != admin) revert NotAdmin();
         _;
     }
 
@@ -57,15 +75,31 @@ contract TierOracle is ITierOracle {
         }
     }
 
-    function setWriter(address writer_) external onlyWriter {
+    function setShared(address account, bool isShared) external onlyAdmin {
+        shared[account] = isShared;
+        if (isShared && _stored[account] > TIER_UNKNOWN + 1) {
+            _stored[account] = TIER_UNKNOWN + 1;
+            emit TierSet(account, TIER_UNKNOWN);
+        }
+        emit SharedSet(account, isShared);
+    }
+
+    function setWriter(address writer_) external onlyAdmin {
         if (writer_ == address(0)) revert ZeroAddress();
         writer = writer_;
         emit WriterSet(writer_);
     }
 
+    function setAdmin(address admin_) external onlyAdmin {
+        if (admin_ == address(0)) revert ZeroAddress();
+        admin = admin_;
+        emit AdminSet(admin_);
+    }
+
     function _set(address account, uint8 tier) private {
         if (tier > TIER_EXTRACTOR) revert BadTier();
-        _stored[account] = tier + 1;
-        emit TierSet(account, tier);
+        uint8 applied = shared[account] && tier > TIER_UNKNOWN ? TIER_UNKNOWN : tier;
+        _stored[account] = applied + 1;
+        emit TierSet(account, applied);
     }
 }
