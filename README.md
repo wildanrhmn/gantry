@@ -23,10 +23,41 @@ hook reads one storage slot in `beforeSwap` and returns an overriding fee for th
 An address nobody has scored yet lands on tier 1, never tier 0, so rotating to a fresh address
 does not escape the toll.
 
-## Contracts
+## Layout
 
 - `contracts/src/Gantry.sol` - the hook. Fee selection lives in `_beforeSwap`.
 - `contracts/src/TierOracle.sol` - behaviour tiers, batch written, single read on the swap path.
+- `scorer/` - reads `Swap` logs straight from an RPC, finds sandwiches, assigns tiers.
+- `scripts/demo.sh` - the whole loop on a local chain.
+
+## The loop
+
+```bash
+anvil --disable-code-size-limit &
+./scripts/demo.sh
+```
+
+It deploys a pool, has a bot sandwich a trader inside one block, scores that from
+chain data, publishes the tiers, then sends two identical swaps and prints the
+difference. Last run:
+
+```
+swaps 3  addresses 2  sandwiches 1
+0x2279...ebe6  suspected swaps=2 blocks=1 sandwiches=1 victims=1
+0x8a79...c318  unknown   swaps=1 blocks=1 sandwiches=0 victims=0
+
+  sandwicher receives 9929150195924421
+  trader     receives 9957135968097604
+  difference 27985772173183 (0.28%)
+```
+
+## Traders behind a router
+
+`beforeSwap` sees whoever called the PoolManager, which for a shared router is the
+router. A bot trading from its own contract is therefore priced on its own history,
+while everyone behind one router looks the same. A trader can sign an attestation
+and pass it as hook data to be priced as themselves; anything malformed, expired or
+signed by the wrong key quietly falls back to pricing the caller.
 
 ## Setup
 

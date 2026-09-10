@@ -248,7 +248,7 @@ Fee override applies **iff** (1) pool has the dynamic-fee flag, (2) `OVERRIDE_FE
 **Phase 0 — de-risk the two unknowns.**
 Confirm the CRE call budget is workable for batch scoring (`cre workflow simulate`), and mine a hook address with the right permission bits. Everything downstream assumes both.
 
-**Phase 1 — the hook.** `Gantry.sol` + `TierOracle.sol` on a v4 pool with dynamic fees. Hardcoded tiers at first. **Prove a fee differs per address on-chain.** This is the spine.
+**Phase 1 — the hook. ✅ DONE.** `Gantry.sol` + `TierOracle.sol` live on a v4 dynamic-fee pool, 9 passing tests, plus the scorer and a scripted end-to-end run. Verified on a local chain: a real sandwich is executed in one block, detected from RPC logs, published as tiers, and identical swaps then pay a **0.28% different fee** — exactly the tier-2 vs tier-1 spread.
 
 **Phase 2 — the data.** Substreams behaviour extraction + subgraph. Score real historical addresses. **Get `jaredfromsubway.eth` classified correctly** — that's the demo.
 
@@ -291,6 +291,15 @@ Confirm the CRE call budget is workable for batch scoring (`cre workflow simulat
 - [ ] Onchain execution shown in the demo
 
 ---
+
+## 12b. Blockers found and cleared in Phase 1
+
+1. **`BaseHook` no longer ships in v4-periphery.** Use `OpenZeppelin/uniswap-hooks@v1.1.1` (`uniswap-hooks/base/BaseHook.sol`). Note `v4-periphery/src/hooks/permissionedPools/` exists in the tree — Uniswap's own Permissioned Pools, confirming why idea A1 was dead.
+2. **`PoolManager` is 34,623 bytes and exceeds EIP-170.** Local deploys need `--disable-code-size-limit` on **both** anvil and `forge script`; without both, forge reports success while nothing lands (codesize 0). On live networks point `POOL_MANAGER` at the canonical deployment instead.
+3. **`deployCodeTo`'s preprocessor cannot resolve private constants in a constructor signature** — `uint24[TIER_COUNT]` had to become `uint24[4]`.
+4. **Same-block transactions from one account need explicit nonces** plus `anvil_setAutomine false` and `anvil_mine`, or they collide as replacements.
+5. **`graphprotocol/subgraphs-skills` exists** (branch `main`) — an earlier note claiming it 404s was wrong. `streamingfast/substreams-skills` is on branch `develop`.
+6. **Swap event semantics, verified from `PoolManager._swap`:** the emitted `delta` is the swapper's, so `zeroForOne` is `amount0 < 0`, and `sender` is `msg.sender` — the same address the hook prices.
 
 ## 13. Risks
 
