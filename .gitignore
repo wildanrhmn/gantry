@@ -10,3 +10,4 @@ indexer/generated/
 indexer/build/
 indexer/node_modules/
 substreams/target/
+substreams/*.spkg

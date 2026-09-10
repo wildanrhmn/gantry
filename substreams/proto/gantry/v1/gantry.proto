@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package gantry.v1;
+
+// Swaps as emitted by a Uniswap v4 PoolManager, in block order.
+message Swaps {
+  repeated Swap swaps = 1;
+}
+
+message Swap {
+  uint64 block_number = 1;
+  uint32 log_index = 2;
+  string pool_id = 3;
+  string sender = 4;
+  bool zero_for_one = 5;
+  string amount_in = 6;
+  string amount_out = 7;
+  string tx_hash = 8;
+}
+
+// One address opening and closing a position around somebody else's trade.
+message Sandwiches {
+  repeated Sandwich sandwiches = 1;
+}
+
+message Sandwich {
+  uint64 block_number = 1;
+  string pool_id = 2;
+  string attacker = 3;
+  repeated string victims = 4;
+  uint32 frontrun_index = 5;
+  uint32 backrun_index = 6;
+}

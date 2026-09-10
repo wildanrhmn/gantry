@@ -1,0 +1,36 @@
+specVersion: v0.1.0
+package:
+  name: gantry
+  version: v0.1.0
+  url: https://github.com/wildanrhmn/gantry
+  description: Uniswap v4 swap extraction and sandwich detection.
+
+network: mainnet
+
+protobuf:
+  files:
+    - gantry/v1/gantry.proto
+  importPaths:
+    - ./proto
+
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: ./target/wasm32-unknown-unknown/release/gantry_substreams.wasm
+
+modules:
+  - name: map_swaps
+    kind: map
+    initialBlock: 0
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:gantry.v1.Swaps
+
+  - name: map_sandwiches
+    kind: map
+    initialBlock: 0
+    inputs:
+      - map: map_swaps
+    output:
+      type: proto:gantry.v1.Sandwiches
