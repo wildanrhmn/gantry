@@ -34,3 +34,18 @@ payer 0x82fdc5c7...  tier 1  fee 0.3%
 ```
 
 That is the whole idea, on a public chain.
+
+## Subgraph
+
+Live at `https://api.studio.thegraph.com/query/1760064/gantry/0.0.1`, indexing from
+block 11677077 with no indexing errors.
+
+First query against it returned the two real swaps:
+
+```
+0xd54db805...  tier 3  scored true   swaps 1
+0x82fdc5c7...  tier 1  scored false  swaps 1
+```
+
+`scored: false` on the second is the point - it is on the default tier because nobody
+scored it, not because anyone decided it was clean.

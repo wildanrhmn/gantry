@@ -16,9 +16,15 @@ export interface TraderRecord {
 
 /** Queries whichever subgraph endpoint the server was pointed at. */
 export async function query<T>(endpoint: string, document: string, variables: Record<string, unknown> = {}): Promise<T> {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  // Studio development endpoints accept an optional bearer token.
+  if (process.env.GANTRY_SUBGRAPH_KEY) {
+    headers.authorization = `Bearer ${process.env.GANTRY_SUBGRAPH_KEY}`;
+  }
+
   const res = await fetch(endpoint, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify({ query: document, variables }),
   });
   if (!res.ok) throw new Error(`subgraph responded ${res.status}`);

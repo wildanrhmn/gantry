@@ -29,6 +29,16 @@ cre login              # or export CRE_API_KEY=...
 cre workflow simulate ./gantry-scoring --target local-simulation --engine-logs
 ```
 
+## Where features come from
+
+`features_url` is not the subgraph. The subgraph indexes what the pool *did* - tolls
+charged, tiers published - which is the audit trail. It cannot see behaviour, because it
+only watches our own contracts and a sandwich is a pattern across every swap in a block.
+
+Behaviour comes from the scorer and the Substreams package, which read all v4 swaps. So
+`features_url` should point at a service backed by those, serving the shape in
+`fixtures-server.mjs`. Pointing it at the subgraph would return the wrong fields.
+
 ## Before deploying
 
 1. Deploy `TierReportReceiver`, then `oracle.setWriter(receiver)`.

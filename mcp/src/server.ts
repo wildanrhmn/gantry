@@ -33,8 +33,8 @@ server.tool(
         `${t.id}`,
         `tier      ${t.tier} (${tierName(t.tier)})${t.scored ? "" : " - never scored, this is the default"}`,
         `swaps     ${t.swaps}`,
-        `first     block ${t.firstSeen}`,
-        `last      block ${t.lastSeen}`,
+        `first     ${new Date(Number(t.firstSeen) * 1000).toISOString()}`,
+        `last      ${new Date(Number(t.lastSeen) * 1000).toISOString()}`,
       ].join("\n"),
     );
   },
