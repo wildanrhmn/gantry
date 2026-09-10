@@ -8,6 +8,7 @@ dataSources:
     network: sepolia
     source:
       abi: Gantry
+      # replace with the deployed Gantry address and the block it landed in
       address: "0x0000000000000000000000000000000000000000"
       startBlock: 0
     mapping:
@@ -30,6 +31,7 @@ dataSources:
     network: sepolia
     source:
       abi: TierOracle
+      # replace with the deployed TierOracle address and the block it landed in
       address: "0x0000000000000000000000000000000000000000"
       startBlock: 0
     mapping:
