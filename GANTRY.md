@@ -253,8 +253,17 @@ Confirm the CRE call budget is workable for batch scoring (`cre workflow simulat
 **Phase 2 — the data. ✅ DONE.** Three Graph products now compose: a Substreams package (`map_swaps` → `map_sandwiches`, packed and hashed), a subgraph over `Tolled`/`TierSet` compiling to WASM, and an MCP server exposing `lookup_address`, `recent_tolls`, `venue_stats`, `worst_offenders`.
 **Still to do here:** point both at a live deployment and score real mainnet history so `jaredfromsubway.eth` classifies correctly. That needs a Subgraph Studio API key and a Substreams token — both user-supplied.
 
-**Phase 3 — the enclave. ✅ BUILT, blocked on one credential.** `TierReportReceiver` validates forwarder, workflow owner and name, then writes tiers. The workflow runs on a cron trigger inside a Nitro enclave via `handlerInTee`, pulls thresholds from `getSecrets`, fetches features over HTTP, scores, and writes a DON-signed report. Typechecks clean, 8 scoring tests pass, 16 contract tests pass.
-**Blocked on:** `cre login` or `CRE_API_KEY` — simulation refuses to run unauthenticated, and the bounty requires simulation or deployment evidence.
+**Phase 3 — the enclave. ✅ DONE.** `TierReportReceiver` validates forwarder, workflow owner and name, then writes tiers. The workflow runs on a cron trigger inside a Nitro enclave via `handlerInTee`, pulls thresholds from `getSecrets`, fetches features over HTTP, scores, and writes a DON-signed report. Typechecks clean, 8 scoring tests pass, 16 contract tests pass.
+**Simulation passes**, captured in `cre/simulation-evidence.txt`:
+```
+│ Handler requested TEE Execution                    │
+[USER LOG] gantry-secrets-ok
+[USER LOG] gantry-scored addresses=4 of=5
+✓ Workflow Simulation Result
+```
+Five addresses in, four out. The one dropped is Uniswap's Universal Router, excluded by the shared-infrastructure guard *inside the enclave*, using the 1,319-originator figure measured on mainnet. That satisfies Chainlink's requirement for evidence of a successful Confidential Workflow simulation.
+
+**Still open:** deploy access is not enabled for the org (`cre account access` needs a TTY, so run it by hand). Simulation alone satisfies the bounty, so this is optional.
 
 **Phase 4 — the surface.** Lookup page first, then live feed, then swap UI, then LP view.
 

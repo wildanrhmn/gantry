@@ -182,9 +182,31 @@ export const initWorkflow = (config: Config): Workflow<Config> => {
   ];
 };
 
+/** Used when the runtime hands the workflow an empty config, as it does in simulation. */
+const DEFAULT_CONFIG: Config = {
+  schedule: "0 */15 * * * *",
+  features_url: "http://127.0.0.1:8799/graphql",
+  max_addresses: 50,
+  secrets_ids: {
+    scoring_params_id: "gantry_scoring_params",
+    features_key_id: "gantry_features_key",
+  },
+  evms: [
+    {
+      chain_selector_name: "ethereum-testnet-sepolia",
+      receiver_address: "0x0000000000000000000000000000000000000000",
+      gas_limit: "800000",
+    },
+  ],
+};
+
 export async function main() {
   const runner = await Runner.newRunner<Config>({
-    configParser: (raw: Uint8Array) => JSON.parse(new TextDecoder().decode(raw)) as Config,
+    configParser: (raw: Uint8Array) => {
+      const text = new TextDecoder().decode(raw);
+      if (!text || text.trim() === "") return DEFAULT_CONFIG;
+      return JSON.parse(text) as Config;
+    },
   });
   await runner.run(initWorkflow);
 }

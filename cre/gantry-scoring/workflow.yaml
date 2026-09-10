@@ -1,3 +1,11 @@
+local-simulation:
+  user-workflow:
+    workflow-name: "gantry"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.local.json"
+    secrets-path: "../secrets.yaml"
+
 staging-settings:
   user-workflow:
     workflow-name: "gantry"
