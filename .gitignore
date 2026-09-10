@@ -11,3 +11,4 @@ indexer/build/
 indexer/node_modules/
 substreams/target/
 substreams/*.spkg
+mcp/node_modules/
