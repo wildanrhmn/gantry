@@ -293,6 +293,29 @@ Confirm the CRE call budget is workable for batch scoring (`cre workflow simulat
 
 ---
 
+## 12a. What mainnet actually contains — measured, not assumed
+
+Scanned live Ethereum mainnet through Substreams (head was block 25,948,797).
+
+| Measurement | Result |
+|---|---|
+| Swaps in 1,500 blocks | **20,609** across **360 distinct senders** |
+| Sandwiches in 3,000 blocks | **58** |
+| Busiest repeat sandwicher | `0x9205a569…` — 11 sandwiches, **1 originator** |
+| Uniswap Universal Router | `0x66a9893c…` — 3,580 swaps, **1,319 originators** |
+| A dedicated bot contract | `0xaaf4b27e…` — 680 swaps, **1 originator** |
+
+**v4 mainnet has plenty of real sandwiches**, so the demo does not need v3 support and does not need a mainnet deployment — only mainnet *data*.
+
+**The finding that changed the design:** attributing sandwiches to the log's `sender` flagged the Universal Router as the single worst offender. Unrelated users trading through one router in one block produce a shape identical to a sandwich. Two fixes, both now in code and tested:
+
+1. **Detection** requires both legs to share a transaction originator.
+2. **Attribution** classifies any address with ≥5 distinct originators as shared infrastructure. Those addresses can never be given a punitive tier and are excluded from publication entirely — charging a router charges every trader behind it.
+
+This is also the empirical case for the attestation path in the hook: a bot trades from a dedicated contract and is scored directly, while retail behind a router is invisible and must attest to be priced as itself.
+
+**Why Substreams is load-bearing here:** `eth_getLogs` returns the log but not the transaction sender. Without the originator there is no way to separate a router from a bot, and Substreams supplies it from receipt context.
+
 ## 12b. Blockers found and cleared in Phase 1
 
 1. **`BaseHook` no longer ships in v4-periphery.** Use `OpenZeppelin/uniswap-hooks@v1.1.1` (`uniswap-hooks/base/BaseHook.sol`). Note `v4-periphery/src/hooks/permissionedPools/` exists in the tree — Uniswap's own Permissioned Pools, confirming why idea A1 was dead.
