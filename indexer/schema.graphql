@@ -20,6 +20,8 @@ type Toll @entity(immutable: true) {
   blockNumber: BigInt!
   timestamp: BigInt!
   transactionHash: Bytes!
+  "Who sent the transaction, which differs from the trader when a router is involved."
+  originator: Bytes!
 }
 
 "A tier the scorer published on chain."

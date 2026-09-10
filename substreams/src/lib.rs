@@ -52,6 +52,7 @@ fn map_swaps(block: eth::Block) -> Result<Swaps, Error> {
             amount_in: amount_in.to_string(),
             amount_out: amount_out.to_string(),
             tx_hash: format!("0x{}", hex::encode(log_view.receipt.transaction.hash.clone())),
+            tx_from: format!("0x{}", hex::encode(log_view.receipt.transaction.from.clone())),
         });
     }
 
@@ -116,6 +117,12 @@ fn map_sandwiches(swaps: Swaps) -> Result<Sandwiches, Error> {
                     if back.zero_for_one == front.zero_for_one {
                         continue;
                     }
+                    // Both legs must come from the same originator. Without this a shared
+                    // router looks identical to a sandwich, because unrelated users trading
+                    // through it in one block produce exactly the same shape.
+                    if back.tx_from.to_lowercase() != front.tx_from.to_lowercase() {
+                        continue;
+                    }
 
                     let front_out = BigInt::from_str(&front.amount_out).unwrap_or(BigInt::zero());
                     let back_in = BigInt::from_str(&back.amount_in).unwrap_or(BigInt::zero());
@@ -128,7 +135,7 @@ fn map_sandwiches(swaps: Swaps) -> Result<Sandwiches, Error> {
                         .filter(|s| {
                             s.log_index > front.log_index
                                 && s.log_index < back.log_index
-                                && s.sender.to_lowercase() != sender
+                                && s.tx_from.to_lowercase() != front.tx_from.to_lowercase()
                                 && s.zero_for_one == front.zero_for_one
                         })
                         .map(|s| s.sender.clone())
@@ -145,6 +152,7 @@ fn map_sandwiches(swaps: Swaps) -> Result<Sandwiches, Error> {
                         victims,
                         frontrun_index: front.log_index,
                         backrun_index: back.log_index,
+                        attacker_eoa: front.tx_from.clone(),
                     });
 
                     used[a] = true;

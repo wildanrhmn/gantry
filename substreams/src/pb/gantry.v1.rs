@@ -26,6 +26,8 @@ pub struct Swap {
     pub amount_out: ::prost::alloc::string::String,
     #[prost(string, tag="8")]
     pub tx_hash: ::prost::alloc::string::String,
+    #[prost(string, tag="9")]
+    pub tx_from: ::prost::alloc::string::String,
 }
 /// One address opening and closing a position around somebody else's trade.
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -49,5 +51,7 @@ pub struct Sandwich {
     pub frontrun_index: u32,
     #[prost(uint32, tag="6")]
     pub backrun_index: u32,
+    #[prost(string, tag="7")]
+    pub attacker_eoa: ::prost::alloc::string::String,
 }
 // @@protoc_insertion_point(module)

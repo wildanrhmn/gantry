@@ -16,6 +16,7 @@ message Swap {
   string amount_in = 6;
   string amount_out = 7;
   string tx_hash = 8;
+  string tx_from = 9;
 }
 
 // One address opening and closing a position around somebody else's trade.
@@ -30,4 +31,5 @@ message Sandwich {
   repeated string victims = 4;
   uint32 frontrun_index = 5;
   uint32 backrun_index = 6;
+  string attacker_eoa = 7;
 }

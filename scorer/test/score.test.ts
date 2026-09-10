@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_PARAMS, scoreAddress } from "../src/score.ts";
+import { DEFAULT_PARAMS, isSharedInfrastructure, publishableTiers, scoreAddress } from "../src/score.ts";
 import { Tier, type AddressFeatures } from "../src/types.ts";
 
 function features(partial: Partial<AddressFeatures> = {}): AddressFeatures {
@@ -13,6 +13,7 @@ function features(partial: Partial<AddressFeatures> = {}): AddressFeatures {
     roundTrips: 0,
     firstBlock: 0,
     lastBlock: 0,
+    originators: 1,
     ...partial,
   };
 }
@@ -54,4 +55,30 @@ test("moving the thresholds moves the verdict", () => {
   const f = features({ sandwiches: 2 });
   assert.equal(scoreAddress(f, DEFAULT_PARAMS), Tier.Suspected);
   assert.equal(scoreAddress(f, { ...DEFAULT_PARAMS, extractorMinSandwiches: 2 }), Tier.Extractor);
+});
+
+// Numbers taken from a real scan of mainnet blocks 25940000-25941500.
+test("uniswap's universal router is recognised as shared infrastructure", () => {
+  const router = features({ address: "0x66a9893c", swaps: 3580, originators: 1319, sandwiches: 23 });
+  assert.ok(isSharedInfrastructure(router));
+});
+
+test("a dedicated bot contract is not", () => {
+  const bot = features({ address: "0xaaf4b27e", swaps: 680, originators: 1, sandwiches: 11 });
+  assert.equal(isSharedInfrastructure(bot), false);
+});
+
+test("a router is never given a punitive tier, however it looks", () => {
+  const router = features({ swaps: 3580, originators: 1319, sandwiches: 23, victimsHarmed: 40 });
+  assert.equal(scoreAddress(router), Tier.Unknown, "charging a router charges everyone behind it");
+});
+
+test("routers are left out of what gets written on chain", () => {
+  const rows = [
+    features({ address: "0xrouter", originators: 1319, sandwiches: 23 }),
+    features({ address: "0xbot", originators: 1, sandwiches: 11 }),
+  ];
+  const publishable = publishableTiers(rows);
+  assert.equal(publishable.has("0xrouter"), false);
+  assert.equal(publishable.get("0xbot"), Tier.Extractor);
 });

@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { fetchSwaps } from "./chain.ts";
 import { buildFeatures, detectSandwiches } from "./detect.ts";
-import { DEFAULT_PARAMS, scoreAll, type ScoringParams } from "./score.ts";
+import { DEFAULT_PARAMS, isSharedInfrastructure, publishableTiers, scoreAll, type ScoringParams } from "./score.ts";
 import { Tier } from "./types.ts";
 
 const TIER_NAME = ["clean", "unknown", "suspected", "extractor"];
@@ -40,12 +40,14 @@ async function main() {
   const sandwiches = detectSandwiches(swaps);
   const features = buildFeatures(swaps, sandwiches);
   const tiers = scoreAll(features, params);
+  const publishable = publishableTiers(features, params);
 
   console.log(`swaps ${swaps.length}  addresses ${features.length}  sandwiches ${sandwiches.length}`);
   for (const f of features.sort((a, b) => b.sandwiches - a.sandwiches || b.swaps - a.swaps)) {
     const tier = tiers.get(f.address) ?? Tier.Unknown;
+    const note = isSharedInfrastructure(f) ? `  [shared infrastructure, ${f.originators} originators - not published]` : "";
     console.log(
-      `${f.address}  ${TIER_NAME[tier].padEnd(9)} swaps=${f.swaps} blocks=${f.blocks} sandwiches=${f.sandwiches} victims=${f.victimsHarmed}`,
+      `${f.address}  ${TIER_NAME[tier].padEnd(9)} swaps=${f.swaps} blocks=${f.blocks} sandwiches=${f.sandwiches} victims=${f.victimsHarmed}${note}`,
     );
   }
 
@@ -53,7 +55,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     fromBlock,
     toBlock: toBlockRaw,
-    addresses: [...tiers.entries()].map(([address, tier]) => ({ address, tier })),
+    addresses: [...publishable.entries()].map(([address, tier]) => ({ address, tier })),
   };
   writeFileSync(out, JSON.stringify(payload, null, 2));
   console.log(`\nwrote ${out}`);

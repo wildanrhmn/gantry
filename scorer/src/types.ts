@@ -7,6 +7,8 @@ export interface Swap {
   zeroForOne: boolean;
   amountIn: bigint;
   amountOut: bigint;
+  /** Transaction originator. Substreams provides this; eth_getLogs cannot. */
+  txFrom?: string;
 }
 
 export interface Sandwich {
@@ -27,6 +29,8 @@ export interface AddressFeatures {
   roundTrips: number;
   firstBlock: number;
   lastBlock: number;
+  /** How many distinct EOAs traded through this address. */
+  originators: number;
 }
 
 export const Tier = {

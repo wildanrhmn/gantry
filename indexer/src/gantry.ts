@@ -20,6 +20,7 @@ export function handleTolled(event: Tolled): void {
   toll.blockNumber = event.block.number;
   toll.timestamp = timestamp;
   toll.transactionHash = event.transaction.hash;
+  toll.originator = event.transaction.from;
   toll.save();
 
   const venue = loadVenue();
