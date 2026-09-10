@@ -28,10 +28,13 @@ does not escape the toll.
 - `contracts/src/Gantry.sol` - the hook. Fee selection lives in `_beforeSwap`.
 - `contracts/src/TierOracle.sol` - behaviour tiers, batch written, single read on the swap path.
 
-## Running it
+## Setup
 
 ```bash
 cd contracts
+forge install Uniswap/v4-core --no-git
+forge install Uniswap/v4-periphery --no-git
+forge install OpenZeppelin/uniswap-hooks@v1.1.1 --no-git
 forge test -vv
 ```
 
