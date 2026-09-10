@@ -263,6 +263,10 @@ Confirm the CRE call budget is workable for batch scoring (`cre workflow simulat
 ```
 Five addresses in, four out. The one dropped is Uniswap's Universal Router, excluded by the shared-infrastructure guard *inside the enclave*, using the 1,319-originator figure measured on mainnet. That satisfies Chainlink's requirement for evidence of a successful Confidential Workflow simulation.
 
+**Simulator limitation, established by testing:** `cre workflow simulate --broadcast` does **not** route reports to a real receiver contract. Pointing `receiver_address` at a deployed `TierReportReceiver` on a local chain with Sepolia's chain id produced a successful transaction to an unrelated address, zero receiver events, and unchanged tiers. The chain write is simulated internally. Proving the CRE-to-receiver hop for real needs a live CRE deployment, which needs deploy access.
+
+**What is proved instead, and it covers the actual risk:** the workflow encodes reports in TypeScript and the receiver decodes them in Solidity, so the real hazard is those two disagreeing. `test/CrossBoundary.t.sol` feeds the exact bytes `encodeTierReport()` produced into `onReport` and asserts the tiers land — 3, 2 and 0 for the three addresses. Cross-language ABI agreement is therefore covered by a test rather than by assumption.
+
 **Still open:** deploy access is not enabled for the org (`cre account access` needs a TTY, so run it by hand). Simulation alone satisfies the bounty, so this is optional.
 
 **Phase 4 — the surface.** Lookup page first, then live feed, then swap UI, then LP view.

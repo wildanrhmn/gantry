@@ -22063,7 +22063,7 @@ var DEFAULT_CONFIG = {
   evms: [
     {
       chain_selector_name: "ethereum-testnet-sepolia",
-      receiver_address: "0x0000000000000000000000000000000000000000",
+      receiver_address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
       gas_limit: "800000"
     }
   ]
