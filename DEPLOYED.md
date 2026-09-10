@@ -49,3 +49,28 @@ First query against it returned the two real swaps:
 
 `scored: false` on the second is the point - it is on the default tier because nobody
 scored it, not because anyone decided it was clean.
+
+## The full path, on Sepolia
+
+The report bytes came from the workflow's own `encodeTierReport()`, and the metadata was
+packed the way the Chainlink forwarder packs it: 32 bytes workflow id, 10 bytes name,
+20 bytes owner. Delivered to `TierReportReceiver.onReport` in tx
+`0x55f1dfe3c8a7920bb0a68f7313b204ee71e748dbde07f6990ebad78beccea2c8`.
+
+One address, two prices, before and after that report:
+
+```
+block 11677086  0x82fdc5c726...  tier 1  fee 0.30%
+block 11677137  0x82fdc5c726...  tier 0  fee 0.05%
+```
+
+Same pool, same size, six times cheaper, because a report moved it a tier. The subgraph
+recorded the transition as previousTier 1 -> tier 0.
+
+## What is still not exercised
+
+Chainlink's own Forwarder verifying DON signatures before it calls `onReport`. Our
+receiver trusts the forwarder by design - it checks `msg.sender`, the workflow owner and
+the workflow name, and leaves signature verification to the forwarder. So the untested
+piece is Chainlink infrastructure, not this repo. Running it for real needs CRE deploy
+access, which is not enabled for the org.

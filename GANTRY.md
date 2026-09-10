@@ -263,6 +263,8 @@ Confirm the CRE call budget is workable for batch scoring (`cre workflow simulat
 ```
 Five addresses in, four out. The one dropped is Uniswap's Universal Router, excluded by the shared-infrastructure guard *inside the enclave*, using the 1,319-originator figure measured on mainnet. That satisfies Chainlink's requirement for evidence of a successful Confidential Workflow simulation.
 
+**The report path is proven on Sepolia.** Report bytes from the workflow's own encoder, metadata packed as the forwarder packs it, delivered to `onReport`, tiers written, and the next swap repriced: the same address paid 0.30% at tier 1 and 0.05% at tier 0. Only Chainlink's forwarder verifying DON signatures is unexercised, and that is their infrastructure - our receiver trusts the forwarder by design.
+
 **Simulator limitation, established by testing:** `cre workflow simulate --broadcast` does **not** route reports to a real receiver contract. Pointing `receiver_address` at a deployed `TierReportReceiver` on a local chain with Sepolia's chain id produced a successful transaction to an unrelated address, zero receiver events, and unchanged tiers. The chain write is simulated internally. Proving the CRE-to-receiver hop for real needs a live CRE deployment, which needs deploy access.
 
 **What is proved instead, and it covers the actual risk:** the workflow encodes reports in TypeScript and the receiver decodes them in Solidity, so the real hazard is those two disagreeing. `test/CrossBoundary.t.sol` feeds the exact bytes `encodeTierReport()` produced into `onReport` and asserts the tiers land — 3, 2 and 0 for the three addresses. Cross-language ABI agreement is therefore covered by a test rather than by assumption.
