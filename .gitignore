@@ -17,3 +17,8 @@ substreams/.substreams.env
 dont-commit-me.env
 *.env
 cre/**/node_modules/
+
+# working notes, kept local
+GANTRY.md
+IDEAS.md
+DEPLOYED.md
