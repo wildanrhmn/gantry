@@ -1,0 +1,18 @@
+{
+  "name": "gantry-scoring-workflow",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test scoring.test.ts"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "1.18.0",
+    "viem": "^2.37.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "typescript": "5.9.3"
+  }
+}

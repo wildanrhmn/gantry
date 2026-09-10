@@ -16,3 +16,4 @@ mcp/node_modules/
 substreams/.substreams.env
 dont-commit-me.env
 *.env
+cre/**/node_modules/

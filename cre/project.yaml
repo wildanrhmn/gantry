@@ -1,0 +1,11 @@
+local-simulation:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: <YOUR RPC URL>
+
+staging:
+  cre-cli:
+    don-family: "zone-a"
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: <YOUR RPC URL>

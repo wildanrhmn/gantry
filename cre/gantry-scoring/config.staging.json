@@ -1,0 +1,16 @@
+{
+  "schedule": "0 */15 * * * *",
+  "features_url": "https://api.studio.thegraph.com/query/<id>/gantry/version/latest",
+  "secrets_ids": {
+    "scoring_params_id": "gantry_scoring_params",
+    "features_key_id": "gantry_features_key"
+  },
+  "max_addresses": 50,
+  "evms": [
+    {
+      "chain_selector_name": "ethereum-testnet-sepolia",
+      "receiver_address": "0x0000000000000000000000000000000000000000",
+      "gas_limit": "800000"
+    }
+  ]
+}
