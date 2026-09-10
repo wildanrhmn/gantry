@@ -253,7 +253,8 @@ Confirm the CRE call budget is workable for batch scoring (`cre workflow simulat
 **Phase 2 — the data. ✅ DONE.** Three Graph products now compose: a Substreams package (`map_swaps` → `map_sandwiches`, packed and hashed), a subgraph over `Tolled`/`TierSet` compiling to WASM, and an MCP server exposing `lookup_address`, `recent_tolls`, `venue_stats`, `worst_offenders`.
 **Still to do here:** point both at a live deployment and score real mainnet history so `jaredfromsubway.eth` classifies correctly. That needs a Subgraph Studio API key and a Substreams token — both user-supplied.
 
-**Phase 3 — the enclave.** CRE workflow with secret weights, signed report → `TierOracle`.
+**Phase 3 — the enclave. ✅ BUILT, blocked on one credential.** `TierReportReceiver` validates forwarder, workflow owner and name, then writes tiers. The workflow runs on a cron trigger inside a Nitro enclave via `handlerInTee`, pulls thresholds from `getSecrets`, fetches features over HTTP, scores, and writes a DON-signed report. Typechecks clean, 8 scoring tests pass, 16 contract tests pass.
+**Blocked on:** `cre login` or `CRE_API_KEY` — simulation refuses to run unauthenticated, and the bounty requires simulation or deployment evidence.
 
 **Phase 4 — the surface.** Lookup page first, then live feed, then swap UI, then LP view.
 
@@ -326,7 +327,11 @@ This is also the empirical case for the attestation path in the hook: a bot trad
 6. **Substreams needs four things installed that a fresh machine lacks:** the `wasm32-unknown-unknown` target, `protoc`, the `substreams` CLI, and **`buf`** — `substreams protogen` fails without buf and does not say so until it runs.
 7. **`substreams` BigInt has no `TryFrom<&str>`** — use `FromStr`. The generated firehose bindings also require `prost-types` as an explicit dependency.
 8. **`package.doc` in `substreams.yaml` is deprecated** — the README is picked up instead.
-9. **Swap event semantics, verified from `PoolManager._swap`:** the emitted `delta` is the swapper's, so `zeroForOne` is `amount0 < 0`, and `sender` is `msg.sender` — the same address the hook prices.
+9. **The CRE SDK is built for Bun** — its `dist` uses directory imports that Node's ESM resolver rejects. Keeping the scoring rules in a file that imports nothing from the SDK sidesteps this and is better design anyway.
+10. **`cre` is not on npm.** Install from the `smartcontractkit/cre-cli` GitHub releases (v1.33.0, `cre_darwin_arm64.zip`), and clear the macOS quarantine attribute after unzipping.
+11. **`cre workflow simulate` requires authentication.** No offline mode.
+12. **Splitting `writer` from `admin` on the oracle was necessary, not cosmetic.** Handing tier writing to the CRE receiver would otherwise hand over the shared-address list too, leaving nobody able to protect a router.
+13. **Swap event semantics, verified from `PoolManager._swap`:** the emitted `delta` is the swapper's, so `zeroForOne` is `amount0 < 0`, and `sender` is `msg.sender` — the same address the hook prices.
 
 ## 13. Risks
 
