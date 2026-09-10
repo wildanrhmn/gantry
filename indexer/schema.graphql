@@ -1,0 +1,42 @@
+"An address that has traded through a Gantry pool."
+type Trader @entity(immutable: false) {
+  id: Bytes!
+  tier: Int!
+  scored: Boolean!
+  swaps: BigInt!
+  feePaidTotal: BigInt!
+  firstSeen: BigInt!
+  lastSeen: BigInt!
+  tolls: [Toll!]! @derivedFrom(field: "trader")
+  tierChanges: [TierChange!]! @derivedFrom(field: "trader")
+}
+
+"One swap, and what it was charged for being that address."
+type Toll @entity(immutable: true) {
+  id: Bytes!
+  trader: Trader!
+  tier: Int!
+  fee: Int!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+"A tier the scorer published on chain."
+type TierChange @entity(immutable: true) {
+  id: Bytes!
+  trader: Trader!
+  tier: Int!
+  previousTier: Int!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+"Running totals for the whole venue."
+type Venue @entity(immutable: false) {
+  id: Bytes!
+  tolls: BigInt!
+  tradersSeen: BigInt!
+  feePaidTotal: BigInt!
+  tollsByTier: [BigInt!]!
+}

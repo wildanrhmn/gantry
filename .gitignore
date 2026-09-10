@@ -6,3 +6,7 @@ node_modules/
 .env
 .env.*
 .DS_Store
+indexer/generated/
+indexer/build/
+indexer/node_modules/
+substreams/target/
