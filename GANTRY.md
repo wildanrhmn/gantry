@@ -250,7 +250,8 @@ Confirm the CRE call budget is workable for batch scoring (`cre workflow simulat
 
 **Phase 1 — the hook. ✅ DONE.** `Gantry.sol` + `TierOracle.sol` live on a v4 dynamic-fee pool, 9 passing tests, plus the scorer and a scripted end-to-end run. Verified on a local chain: a real sandwich is executed in one block, detected from RPC logs, published as tiers, and identical swaps then pay a **0.28% different fee** — exactly the tier-2 vs tier-1 spread.
 
-**Phase 2 — the data.** Substreams behaviour extraction + subgraph. Score real historical addresses. **Get `jaredfromsubway.eth` classified correctly** — that's the demo.
+**Phase 2 — the data. ✅ DONE.** Three Graph products now compose: a Substreams package (`map_swaps` → `map_sandwiches`, packed and hashed), a subgraph over `Tolled`/`TierSet` compiling to WASM, and an MCP server exposing `lookup_address`, `recent_tolls`, `venue_stats`, `worst_offenders`.
+**Still to do here:** point both at a live deployment and score real mainnet history so `jaredfromsubway.eth` classifies correctly. That needs a Subgraph Studio API key and a Substreams token — both user-supplied.
 
 **Phase 3 — the enclave.** CRE workflow with secret weights, signed report → `TierOracle`.
 
@@ -299,7 +300,10 @@ Confirm the CRE call budget is workable for batch scoring (`cre workflow simulat
 3. **`deployCodeTo`'s preprocessor cannot resolve private constants in a constructor signature** — `uint24[TIER_COUNT]` had to become `uint24[4]`.
 4. **Same-block transactions from one account need explicit nonces** plus `anvil_setAutomine false` and `anvil_mine`, or they collide as replacements.
 5. **`graphprotocol/subgraphs-skills` exists** (branch `main`) — an earlier note claiming it 404s was wrong. `streamingfast/substreams-skills` is on branch `develop`.
-6. **Swap event semantics, verified from `PoolManager._swap`:** the emitted `delta` is the swapper's, so `zeroForOne` is `amount0 < 0`, and `sender` is `msg.sender` — the same address the hook prices.
+6. **Substreams needs four things installed that a fresh machine lacks:** the `wasm32-unknown-unknown` target, `protoc`, the `substreams` CLI, and **`buf`** — `substreams protogen` fails without buf and does not say so until it runs.
+7. **`substreams` BigInt has no `TryFrom<&str>`** — use `FromStr`. The generated firehose bindings also require `prost-types` as an explicit dependency.
+8. **`package.doc` in `substreams.yaml` is deprecated** — the README is picked up instead.
+9. **Swap event semantics, verified from `PoolManager._swap`:** the emitted `delta` is the swapper's, so `zeroForOne` is `amount0 < 0`, and `sender` is `msg.sender` — the same address the hook prices.
 
 ## 13. Risks
 

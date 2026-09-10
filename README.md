@@ -28,6 +28,9 @@ does not escape the toll.
 - `contracts/src/Gantry.sol` - the hook. Fee selection lives in `_beforeSwap`.
 - `contracts/src/TierOracle.sol` - behaviour tiers, batch written, single read on the swap path.
 - `scorer/` - reads `Swap` logs straight from an RPC, finds sandwiches, assigns tiers.
+- `substreams/` - `map_swaps` extracts v4 swaps, `map_sandwiches` consumes it.
+- `indexer/` - subgraph over `Tolled` and `TierSet`, building per-address history.
+- `mcp/` - ask an MCP client why an address pays what it pays.
 - `scripts/demo.sh` - the whole loop on a local chain.
 
 ## The loop
