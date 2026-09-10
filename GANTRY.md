@@ -307,6 +307,26 @@ Five addresses in, four out. The one dropped is Uniswap's Universal Router, excl
 
 ---
 
+## 12z. Live on Sepolia
+
+Deployed from block 11677077, chain 11155111.
+
+| Contract | Address |
+|---|---|
+| Gantry hook | `0x42A5B912625E0b9Aba3286CEfA3BB823DDAE0080` |
+| TierOracle | `0x846d3eF24c3c6e079Bd95cFeACC08B21427C9132` |
+| TierReportReceiver | `0x351278Ef6FF1325c69127255936e5E7d0B47A1A4` |
+| PoolManager | `0xE03A1074c86CFeDd5C142C4F04F1a1536e203543` (Uniswap canonical) |
+
+A live pool carries real traffic. Both swaps below are in **block 11677086**, same pool, same size:
+
+```
+payer 0xd54db805...  tier 3  fee 1.0%
+payer 0x82fdc5c7...  tier 1  fee 0.3%
+```
+
+The hook address ends `0080` because v4 reads permissions from the address itself; the salt was mined so the low 14 bits equal 128, the `BEFORE_SWAP` bit.
+
 ## 12a. What mainnet actually contains — measured, not assumed
 
 Scanned live Ethereum mainnet through Substreams (head was block 25,948,797).
