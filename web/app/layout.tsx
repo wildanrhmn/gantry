@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
+import { SmoothScroll } from "@/components/SmoothScroll";
+import { WalletProvider } from "@/components/WalletProvider";
 
 export const metadata: Metadata = {
   title: "Gantry — every swap gets read as it passes",
@@ -21,9 +23,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="stylesheet" href={FONTS} />
       </head>
       <body>
-        <Nav />
-        {children}
-        <Footer />
+        <WalletProvider>
+          <SmoothScroll />
+          <Nav />
+          {children}
+          <Footer />
+        </WalletProvider>
       </body>
     </html>
   );

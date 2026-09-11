@@ -1,39 +1,199 @@
-.bar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: color-mix(in srgb, var(--page) 88%, transparent);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border);
-}
-.inner {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: var(--s4) var(--s6);
+.wrap {
+  position: fixed;
+  top: 14px;
+  left: 0;
+  right: 0;
+  z-index: 50;
   display: flex;
-  align-items: baseline;
-  gap: var(--s6);
-  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0 var(--s4);
+  pointer-events: none;
 }
+
+/* one pane of glass: a bright top bevel, a dark bottom one, and blur behind */
+.bar {
+  pointer-events: auto;
+  position: relative;
+  width: 100%;
+  max-width: 1060px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 var(--s6);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.022));
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 20px 50px -24px rgba(0, 0, 0, 0.95);
+  transition: background 300ms ease, border-color 300ms ease, box-shadow 300ms ease;
+}
+.bar[data-lifted="true"] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(8, 8, 22, 0.72));
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* the light that travels across a curved glass surface */
+.bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.09), transparent);
+  animation: sheen 9s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes sheen {
+  0%, 62% { transform: translateX(0); }
+  90%, 100% { transform: translateX(390%); }
+}
+
 .brand {
+  position: relative;
   font-family: var(--font-display), sans-serif;
-  font-variation-settings: "wdth" 122;
-  font-weight: 800;
-  font-size: 17px;
-  letter-spacing: 0.02em;
+  font-variation-settings: "wdth" 120;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.32em;
   color: var(--fg);
   text-decoration: none;
+  white-space: nowrap;
 }
-.links { display: flex; gap: var(--s5); flex-wrap: wrap; }
+
+.links {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
 .link {
-  font-family: var(--font-mono), monospace;
-  font-size: 13px;
-  color: var(--fg-dim);
+  position: relative;
+  z-index: 1;
+  padding: 9px var(--s5);
+  border-radius: var(--r-full);
+  font-family: var(--font-body), sans-serif;
+  font-size: 14px;
+  color: var(--fg-muted);
   text-decoration: none;
-  padding-bottom: 2px;
-  border-bottom: 1px solid transparent;
+  white-space: nowrap;
+  transition: color 180ms ease;
 }
-.link:hover { color: var(--fg-muted); }
-.link[data-active="true"] { color: var(--brand-light); border-bottom-color: var(--brand); }
-.net { margin-left: auto; font-family: var(--font-mono), monospace; font-size: 12px; color: var(--fg-dim); }
-@media (max-width: 560px) { .inner { padding: var(--s3) var(--s4); gap: var(--s4); } .net { display: none; } }
+.link:hover { color: var(--fg); }
+.link[data-active="true"] { color: var(--fg); }
+
+/* the lozenge slides between items rather than each item lighting up on its own */
+.marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cta {
+  position: relative;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s3);
+  height: 40px;
+  padding: 0 var(--s6);
+  border-radius: var(--r-full);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+.cta:hover { background: rgba(255, 255, 255, 0.11); border-color: rgba(255, 255, 255, 0.28); }
+.cta:disabled { cursor: progress; opacity: 0.7; }
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.menu {
+  display: none;
+  margin-left: var(--s3);
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+.menu span {
+  display: block;
+  width: 15px;
+  height: 1px;
+  background: var(--fg);
+  box-shadow: 0 5px 0 var(--fg), 0 -5px 0 var(--fg);
+  transition: box-shadow 160ms ease, transform 220ms ease;
+}
+.menu[data-open="true"] span { transform: rotate(45deg); box-shadow: 0 0 0 var(--fg); }
+.menu[data-open="true"] span::after {
+  content: "";
+  display: block;
+  width: 15px;
+  height: 1px;
+  background: var(--fg);
+  transform: rotate(-90deg);
+}
+
+.sheet {
+  pointer-events: auto;
+  position: absolute;
+  top: 68px;
+  left: var(--s4);
+  right: var(--s4);
+  display: none;
+  flex-direction: column;
+  padding: var(--s3);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(22, 22, 46, 0.94), rgba(6, 6, 18, 0.96));
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 24px 60px -24px rgba(0, 0, 0, 0.95);
+}
+.sheet a {
+  padding: var(--s4) var(--s5);
+  border-radius: 14px;
+  font-size: 15px;
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+.sheet a[data-active="true"] { color: var(--fg); background: rgba(255, 255, 255, 0.07); }
+
+@media (max-width: 860px) {
+  .bar { height: 52px; padding: 0 6px 0 var(--s5); }
+  .links { display: none; }
+  .menu { display: flex; }
+  .sheet[data-open="true"] { display: flex; }
+  .cta { height: 36px; padding: 0 var(--s4); font-size: 11px; }
+  .brand { font-size: 12px; letter-spacing: 0.26em; }
+}

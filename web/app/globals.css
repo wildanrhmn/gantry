@@ -23,6 +23,14 @@
   --warning: #ffaf62;
   --warning-soft: #ffaf6214;
 
+  --asphalt: #06060e;
+  --asphalt-haze: #03030b;
+  --asphalt-line: #26263f;
+  --steel: #0d0d1a;
+  --steel-edge: #2b2b48;
+  --led: #ffc24d;
+  --led-glow: #ffb03a66;
+
   --fg: #e8e8ff;
   --fg-muted: #8a8aae;
   --fg-dim: #5a5a7a;
@@ -37,6 +45,8 @@
   --s1: 4px;  --s2: 8px;   --s3: 12px;  --s4: 16px;  --s5: 20px;
   --s6: 24px; --s8: 32px;  --s10: 40px; --s12: 48px; --s16: 64px;
   --s20: 80px; --s24: 96px; --s32: 128px;
+
+  --nav-h: 86px;
 }
 
 * { box-sizing: border-box; }
@@ -44,7 +54,7 @@
 html, body { padding: 0; margin: 0; }
 
 /* the nav is sticky, so anchored scrolling has to clear it */
-html { scroll-padding-top: 88px; }
+html { scroll-padding-top: calc(var(--nav-h) + var(--s6)); }
 
 body {
   background: var(--page);
@@ -95,7 +105,10 @@ body {
 
 .h3 { font-size: clamp(26px, 4vw, 36px); font-weight: 700; }
 .lede { color: var(--fg-muted); max-width: 62ch; margin: var(--s3) 0 0; }
-.page { max-width: 1120px; margin: 0 auto; padding: var(--s12) var(--s6) var(--s32); }
-.section { margin-top: var(--s24); border-top: 1px solid var(--border); padding-top: var(--s8); scroll-margin-top: 88px; }
+.page { max-width: 1120px; margin: 0 auto; padding: calc(var(--nav-h) + var(--s8)) var(--s6) var(--s32); }
+.section { margin-top: var(--s24); border-top: 1px solid var(--border); padding-top: var(--s8); scroll-margin-top: calc(var(--nav-h) + var(--s6)); }
 .section:first-of-type { margin-top: 0; border-top: 0; padding-top: 0; }
-@media (max-width: 560px) { .page { padding: var(--s8) var(--s4) var(--s24); } }
+@media (max-width: 720px) {
+  :root { --nav-h: 74px; }
+  .page { padding: calc(var(--nav-h) + var(--s5)) var(--s4) var(--s24); }
+}

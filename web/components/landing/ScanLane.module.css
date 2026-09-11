@@ -1,0 +1,236 @@
+.lane {
+  position: relative;
+  width: 100%;
+  height: 244px;
+  overflow: hidden;
+  user-select: none;
+  background: linear-gradient(180deg, transparent 0%, var(--asphalt-haze) 55%, var(--asphalt) 100%);
+}
+
+/* the overhead structure: a beam on two legs, spanning the carriageway */
+/* a lattice girder: two rails with braces between them, not a hatched bar */
+.truss {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 16px;
+  background: var(--steel);
+  border-top: 1px solid var(--steel-edge);
+  border-bottom: 1px solid var(--steel-edge);
+  background-image:
+    repeating-linear-gradient(58deg, transparent 0 20px, color-mix(in srgb, var(--steel-edge) 60%, transparent) 20px 21px),
+    repeating-linear-gradient(-58deg, transparent 0 20px, color-mix(in srgb, var(--steel-edge) 60%, transparent) 20px 21px);
+}
+.leg {
+  position: absolute;
+  top: 16px;
+  bottom: 84px;
+  width: 12px;
+  background: var(--steel);
+  border-left: 1px solid var(--steel-edge);
+  border-right: 1px solid var(--steel-edge);
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0 17px,
+    color-mix(in srgb, var(--steel-edge) 55%, transparent) 17px 18px
+  );
+}
+.leg[data-side="left"] { left: 0; }
+.leg[data-side="right"] { right: 0; }
+
+.rig {
+  position: absolute;
+  top: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 3;
+}
+.mast { width: 3px; height: 14px; background: var(--steel-edge); }
+
+/* the sensor head that does the reading */
+.head {
+  width: 46px;
+  height: 13px;
+  background: var(--steel);
+  border: 1px solid var(--steel-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.lens {
+  width: 4px;
+  height: 4px;
+  background: var(--danger);
+  box-shadow: 0 0 6px var(--danger);
+  animation: blink 2.4s steps(1, end) infinite;
+}
+@keyframes blink { 0%, 70% { opacity: 1; } 71%, 100% { opacity: 0.18; } }
+
+/* the variable message sign, the thing a gantry actually shows you */
+.board {
+  margin-top: 5px;
+  min-width: 168px;
+  padding: 9px 14px 10px;
+  background: #07070c;
+  border: 1px solid var(--steel-edge);
+  box-shadow: 0 0 0 3px #07070c, 0 14px 40px -12px var(--led-glow);
+  text-align: center;
+  position: relative;
+}
+/* the dot grid that makes it read as an LED matrix rather than a web card */
+.board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at center, #ffffff0f 0.5px, transparent 0.6px);
+  background-size: 3px 3px;
+  pointer-events: none;
+}
+.tierText {
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--led);
+  text-shadow: 0 0 12px var(--led-glow);
+  line-height: 1.1;
+}
+.feeText {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: color-mix(in srgb, var(--led) 55%, transparent);
+}
+
+/* the light the sensor throws onto the road */
+.beam {
+  position: absolute;
+  top: 104px;
+  bottom: 22px;
+  width: 190px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--led) 22%, transparent), transparent 88%);
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  opacity: 0.5;
+  z-index: 1;
+}
+.core {
+  position: absolute;
+  top: 104px;
+  bottom: 22px;
+  width: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--led), transparent 92%);
+  opacity: 0.75;
+  z-index: 1;
+}
+
+.road {
+  position: absolute;
+  inset: auto 0 0;
+  height: 84px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--asphalt-line) 22%, var(--asphalt)), var(--asphalt) 42%);
+  border-top: 1px solid var(--steel-edge);
+}
+/* where the sensor's light lands */
+.pool {
+  position: absolute;
+  bottom: 0;
+  width: 300px;
+  height: 84px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse 50% 70% at 50% 30%, color-mix(in srgb, var(--led) 14%, transparent), transparent 70%);
+  pointer-events: none;
+}
+/* lane markings, moving at the same speed as the traffic */
+.dashes {
+  position: absolute;
+  left: -120px;
+  right: -120px;
+  bottom: 16px;
+  height: 2px;
+  background-image: linear-gradient(90deg, var(--fg-dim) 0 46px, transparent 46px 116px);
+  background-size: 116px 2px;
+  opacity: 0.35;
+}
+
+.traffic {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  height: 40px;
+  z-index: 2;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.car {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 152px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  will-change: transform;
+}
+.plate {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-dim);
+  white-space: nowrap;
+}
+/* the nose lamp: unlit until the sensor has read it */
+.lamp {
+  width: 6px;
+  height: 18px;
+  background: var(--fg-dim);
+  opacity: 0.35;
+  flex: none;
+}
+.fee {
+  margin-left: auto;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  color: var(--fg-dim);
+  opacity: 0;
+}
+
+.car[data-read="true"] .plate { color: var(--fg); }
+.car[data-read="true"] .fee { opacity: 1; }
+.car[data-read="true"][data-tier="0"] { border-color: var(--success); }
+.car[data-read="true"][data-tier="1"] { border-color: var(--brand-medium); }
+.car[data-read="true"][data-tier="2"] { border-color: var(--warning); }
+.car[data-read="true"][data-tier="3"] { border-color: var(--danger); }
+.car[data-read="true"][data-tier="0"] .lamp { background: var(--success); box-shadow: 0 0 10px var(--success); opacity: 1; }
+.car[data-read="true"][data-tier="1"] .lamp { background: var(--brand-medium); box-shadow: 0 0 10px var(--brand-medium); opacity: 1; }
+.car[data-read="true"][data-tier="2"] .lamp { background: var(--warning); box-shadow: 0 0 10px var(--warning); opacity: 1; }
+.car[data-read="true"][data-tier="3"] { background: color-mix(in srgb, var(--danger) 7%, var(--card)); }
+.car[data-read="true"][data-tier="3"] .lamp { background: var(--danger); box-shadow: 0 0 10px var(--danger); opacity: 1; }
+.car[data-read="true"][data-tier="0"] .fee { color: var(--success); }
+.car[data-read="true"][data-tier="2"] .fee { color: var(--warning); }
+.car[data-read="true"][data-tier="3"] .fee { color: var(--danger); }
+
+@media (max-width: 720px) {
+  .lane { height: 206px; }
+  .road { height: 72px; }
+  .leg { bottom: 72px; }
+  .pool { height: 72px; }
+  .beam, .core { top: 92px; bottom: 18px; }
+  .traffic { bottom: 24px; }
+  .board { min-width: 132px; padding: 6px 10px 7px; }
+  .tierText { font-size: 12px; }
+  .feeText { font-size: 10px; }
+}

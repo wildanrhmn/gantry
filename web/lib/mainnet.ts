@@ -99,3 +99,30 @@ export async function allTraders(max = 1000): Promise<MainnetTrader[]> {
   }
   return out;
 }
+
+export interface LaneRow {
+  id: string;
+  tier: number;
+}
+
+/** A spread of real addresses across the tiers, for the traffic in the hero. */
+export async function laneSample(): Promise<LaneRow[]> {
+  const pick = (alias: string, tier: number, n: number, sort: string) =>
+    `${alias}: mainnetTraders(first: ${n}, where: { tier: ${tier} }, orderBy: ${sort}, orderDirection: desc) { id tier }`;
+
+  const data = await query<Record<string, LaneRow[]>>(
+    `{ ${pick("extractors", 3, 3, "sandwiches")}
+       ${pick("suspected", 2, 2, "swaps")}
+       ${pick("unknown", 1, 2, "swaps")}
+       ${pick("clean", 0, 3, "swaps")} }`,
+  );
+  if (!data) return [];
+
+  // interleaved so the traffic reads as mixed rather than sorted by verdict
+  const lanes = [data.clean ?? [], data.extractors ?? [], data.unknown ?? [], data.suspected ?? []];
+  const out: LaneRow[] = [];
+  for (let i = 0; out.length < 10 && i < 6; i++) {
+    for (const lane of lanes) if (lane[i]) out.push(lane[i]);
+  }
+  return out;
+}

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  createWalletClient,
   decodeEventLog,
   formatUnits,
   parseUnits,
@@ -14,7 +13,6 @@ import {
   CHAIN,
   MIN_PRICE_LIMIT,
   POOL_KEY,
-  browserTransport,
   erc20Abi,
   gantryAbi,
   encodeAttestation,
@@ -22,6 +20,7 @@ import {
   publicClient,
   routerAbi,
 } from "@/lib/chain";
+import { useWallet } from "@/components/WalletProvider";
 import { tier as tierOf } from "@/lib/tiers";
 import styles from "./Swap.module.css";
 
@@ -37,7 +36,7 @@ interface Receipt {
 }
 
 export function Swap() {
-  const [account, setAccount] = useState<Address | null>(null);
+  const { account, connecting, connect, client: wallet } = useWallet();
   const [balance, setBalance] = useState<bigint | null>(null);
   const [allowance, setAllowance] = useState<bigint | null>(null);
   const [amount, setAmount] = useState("1");
@@ -64,12 +63,6 @@ export function Swap() {
     if (account) void refresh(account);
   }, [account, refresh]);
 
-  function wallet() {
-    const transport = browserTransport();
-    if (!transport) throw new Error("No wallet found. Install one, then reload.");
-    return createWalletClient({ chain: CHAIN, transport });
-  }
-
   async function run(label: string, fn: () => Promise<void>) {
     setError(null);
     setBusy(label);
@@ -82,16 +75,6 @@ export function Swap() {
       setBusy(null);
     }
   }
-
-  const connect = () =>
-    run("connect", async () => {
-      const client = wallet();
-      const [who] = await client.requestAddresses();
-      await client.switchChain({ id: CHAIN.id }).catch(async () => {
-        await client.addChain({ chain: CHAIN });
-      });
-      setAccount(who);
-    });
 
   const getTokens = () =>
     run("mint", async () => {
@@ -185,7 +168,7 @@ export function Swap() {
       <div className={styles.steps}>
         <Step n={1} done={Boolean(account)} title="Connect a wallet"
           sub={account ?? "Sepolia — nothing here costs real money"}
-          action={account ? null : { label: busy === "connect" ? "Connecting" : "Connect", onClick: connect, primary: true }} />
+          action={account ? null : { label: connecting ? "Connecting" : "Connect", onClick: connect, primary: true }} />
 
         <Step n={2} done={!needsTokens} title="Get test tokens"
           sub={!account ? "1,000 gUSD, free" : balance === null ? "reading" : `${Number(formatUnits(balance, 18)).toLocaleString()} gUSD`}

@@ -1,4 +1,8 @@
 .field { display: flex; gap: var(--s3); flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .field > input { flex: 1 1 100%; }
+  .field > button, .field > a { flex: 1 1 0; justify-content: center; }
+}
 .input, .inputBig {
   flex: 1;
   min-width: 260px;

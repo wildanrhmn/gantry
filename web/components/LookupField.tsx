@@ -10,7 +10,15 @@ const EXAMPLES = [
   { address: "0x66a9893cc07d91d95644aedd05d03f95e1dba8af", label: "Uniswap's router" },
 ];
 
-export function LookupField({ initial = "", big = true }: { initial?: string; big?: boolean }) {
+export function LookupField({
+  initial = "",
+  big = true,
+  trailing,
+}: {
+  initial?: string;
+  big?: boolean;
+  trailing?: React.ReactNode;
+}) {
   const router = useRouter();
   const [value, setValue] = useState(initial);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +46,7 @@ export function LookupField({ initial = "", big = true }: { initial?: string; bi
           autoComplete="off"
         />
         <button className={styles.go} type="submit">Look up</button>
+        {trailing}
       </form>
 
       {error ? <p className={styles.error}>{error}</p> : null}

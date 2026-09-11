@@ -1,0 +1,174 @@
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* the road ahead, receding. Kept faint so it reads as texture, not as a chart */
+.horizon {
+  position: absolute;
+  inset: 0 0 40% 0;
+  background-image:
+    linear-gradient(90deg, var(--asphalt-line) 1px, transparent 1px),
+    linear-gradient(0deg, var(--asphalt-line) 1px, transparent 1px);
+  background-size: 84px 84px;
+  transform: perspective(620px) rotateX(72deg) scale(2.4);
+  transform-origin: bottom center;
+  opacity: 0.16;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 100%, #000, transparent 72%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 100%, #000, transparent 72%);
+  pointer-events: none;
+}
+.glow {
+  position: absolute;
+  inset: -10% -20% auto;
+  height: 78%;
+  background:
+    radial-gradient(ellipse 38% 46% at 22% 18%, #4b3ce055, transparent 68%),
+    radial-gradient(ellipse 34% 40% at 74% 8%, #1f6fb455, transparent 66%),
+    radial-gradient(ellipse 30% 34% at 52% 40%, #7a4bd033, transparent 70%);
+  filter: blur(38px);
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: calc(var(--nav-h) + var(--s6)) var(--s6) var(--s10);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s3);
+  align-self: flex-start;
+  padding: 8px var(--s5);
+  border-radius: var(--r-full);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.045);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+.wide { display: inline; }
+.pulse[data-live="false"] { background: var(--fg-dim); box-shadow: none; animation: none; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.title {
+  margin: var(--s6) 0 0;
+  font-family: var(--font-display), sans-serif;
+  font-variation-settings: "wdth" 112;
+  font-weight: 800;
+  font-size: clamp(38px, 6.4vw, 86px);
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+.title span { display: block; }
+/* the last line is the payload, so it gets the sign's colour */
+.title em {
+  display: block;
+  font-style: normal;
+  color: var(--led);
+  text-shadow: 0 0 40px var(--led-glow);
+}
+
+.lede {
+  margin: var(--s6) 0 0;
+  max-width: 56ch;
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+.lede strong { color: var(--fg); font-weight: 600; }
+
+.actions {
+  margin-top: var(--s8);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s6);
+  flex-wrap: wrap;
+}
+.lookup { flex: 1 1 100%; }
+.swapLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 0 var(--s6);
+  border: 1px solid var(--brand-strong);
+  background: var(--brand-softer);
+  color: var(--brand-light);
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.swapLink:hover { background: var(--brand-soft); border-color: var(--brand); }
+
+.ticker {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--page) 80%, transparent);
+}
+.stat {
+  flex: 1 1 160px;
+  padding: var(--s4) var(--s6);
+  border-right: 1px solid var(--border-subtle);
+}
+.stat:last-child { border-right: 0; }
+.statValue {
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(17px, 2.2vw, 23px);
+  font-weight: 500;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.statLabel {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+@media (max-width: 720px) {
+  .inner { padding: calc(var(--nav-h) + var(--s4)) var(--s4) var(--s6); }
+  .title { margin-top: var(--s5); }
+  .lede { margin-top: var(--s5); }
+  .wide { display: none; }
+  .badge { font-size: 10px; }
+  .actions { margin-top: var(--s6); gap: var(--s4); }
+  .stat { padding: var(--s3) var(--s4); }
+}
