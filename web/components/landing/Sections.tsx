@@ -28,6 +28,7 @@ export interface Scan {
   swaps: number;
   sandwiches: number;
   addresses: number;
+  reverted: number;
   fromBlock: number;
   toBlock: number;
 }
@@ -57,7 +58,7 @@ export function Problem({ scan }: { scan: Scan }) {
               <div className={styles.evidence}>
                 {[
                   [n(scan.sandwiches), "sandwiches found", "bad"],
-                  ["2,827", "reverted attempts", "warn"],
+                  [n(scan.reverted), "reverted attempts", "warn"],
                   ["0.30%", "what all of them pay today", ""],
                 ].map(([value, label, tone]) => (
                   <div className={styles.evidenceRow} key={label}>

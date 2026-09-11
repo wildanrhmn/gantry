@@ -26,7 +26,7 @@ export default async function Home() {
     ["sandwiches found", count(scan.sandwiches)],
     ["addresses scored", count(scan.addresses)],
     ["indexed to block", count(scan.toBlock)],
-    ["reverted attempts", "2,827"],
+    ["reverted attempts", count(scan.reverted)],
     ["clean pays", "0.05%"],
     ["extractor pays", "1.00%"],
     ["venue", "Uniswap v4"],

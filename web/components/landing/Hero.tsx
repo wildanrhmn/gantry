@@ -9,6 +9,7 @@ import styles from "./Hero.module.css";
 export interface HeroStats {
   swaps: number;
   sandwiches: number;
+  reverted: number;
 }
 
 const count = (v: number) => v.toLocaleString("en-US");
@@ -90,7 +91,7 @@ export function Hero({ cars, stats }: { cars: LaneCar[]; stats: HeroStats }) {
               <span className={styles.statLabel}>sandwiches found</span>
             </span>
             <span>
-              <span className={styles.statValue}>2,827</span>
+              <span className={styles.statValue}>{count(stats.reverted)}</span>
               <span className={styles.statLabel}>reverted attempts</span>
             </span>
           </div>

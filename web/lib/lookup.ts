@@ -22,12 +22,16 @@ const failed = new Map(Object.entries(attempts.perAddress as Record<string, numb
 /** How many of this address's transactions reached the PoolManager and reverted. */
 export const revertedFor = (address: string) => failed.get(address.toLowerCase()) ?? 0;
 
+/** Every reverted attempt in the scan. Read from the artifact, never typed into the copy. */
+export const revertedTotal = Number(attempts.total ?? 0);
+
 export interface ScanWindow {
   fromBlock: number;
   toBlock: number;
   swaps: number;
   sandwiches: number;
   addresses: number;
+  reverted: number;
   live: boolean;
 }
 
@@ -35,7 +39,10 @@ export interface ScanWindow {
 export async function scanWindow(): Promise<ScanWindow> {
   const totals = await scanTotals();
   if (!totals) {
-    return { fromBlock: 0, toBlock: 0, swaps: 0, sandwiches: 0, addresses: 0, live: false };
+    return {
+      fromBlock: 0, toBlock: 0, swaps: 0, sandwiches: 0,
+      addresses: 0, reverted: revertedTotal, live: false,
+    };
   }
   return {
     fromBlock: Number(totals.firstBlock),
@@ -43,6 +50,7 @@ export async function scanWindow(): Promise<ScanWindow> {
     swaps: Number(totals.swaps),
     sandwiches: Number(totals.sandwiches),
     addresses: Number(totals.addresses),
+    reverted: revertedTotal,
     live: true,
   };
 }
