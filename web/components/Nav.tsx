@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useWallet } from "@/components/WalletProvider";
-import { gsap } from "@/lib/motion";
 import { shorten } from "@/lib/tiers";
 import styles from "./Nav.module.css";
 
@@ -15,15 +14,13 @@ const LINKS = [
 ];
 
 const isCurrent = (href: string, path: string) =>
-  href === "/" ? path === "/" || path.startsWith("/address") : path.startsWith(href);
+  href === "/" ? path.startsWith("/address") : path.startsWith(href);
 
 export function Nav() {
   const path = usePathname();
   const { account, connecting, connect } = useWallet();
   const [lifted, setLifted] = useState(false);
   const [open, setOpen] = useState(false);
-  const links = useRef<HTMLDivElement>(null);
-  const marker = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const onScroll = () => setLifted(window.scrollY > 24);
@@ -44,48 +41,13 @@ export function Nav() {
     return () => document.removeEventListener("click", close);
   }, [open]);
 
-  // the lozenge travels to whichever item is current, so the nav has one moving part
-  useEffect(() => {
-    const move = (target: HTMLElement | null, instant = false) => {
-      if (!marker.current || !links.current || !target) return;
-      const box = target.getBoundingClientRect();
-      const base = links.current.getBoundingClientRect();
-      gsap.to(marker.current, {
-        x: box.left - base.left,
-        width: box.width,
-        opacity: 1,
-        duration: instant ? 0 : 0.42,
-        ease: "power3.out",
-      });
-    };
-
-    const active = links.current?.querySelector<HTMLElement>('[data-active="true"]') ?? null;
-    move(active, true);
-
-    const container = links.current;
-    if (!container) return;
-    const items = Array.from(container.querySelectorAll<HTMLElement>("a"));
-    const enter = (e: Event) => move(e.currentTarget as HTMLElement);
-    const leave = () => move(active);
-    items.forEach((item) => {
-      item.addEventListener("mouseenter", enter);
-      item.addEventListener("mouseleave", leave);
-    });
-    return () => {
-      items.forEach((item) => {
-        item.removeEventListener("mouseenter", enter);
-        item.removeEventListener("mouseleave", leave);
-      });
-    };
-  }, [path]);
 
   return (
     <div className={styles.wrap}>
       <nav className={styles.bar} data-lifted={lifted}>
         <Link href="/" className={styles.brand}>GANTRY</Link>
 
-        <div className={styles.links} ref={links}>
-          <span className={styles.marker} ref={marker} />
+        <div className={styles.links}>
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} className={styles.link} data-active={isCurrent(l.href, path)}>
               {l.label}

@@ -15,7 +15,7 @@
   pointer-events: auto;
   position: relative;
   width: 100%;
-  max-width: 1060px;
+  max-width: 780px;
   height: 58px;
   display: flex;
   align-items: center;
@@ -67,18 +67,14 @@
 }
 
 .links {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--s2);
+  margin: 0 auto;
 }
 .link {
   position: relative;
-  z-index: 1;
-  padding: 9px var(--s5);
-  border-radius: var(--r-full);
+  padding: 9px var(--s4);
   font-family: var(--font-body), sans-serif;
   font-size: 14px;
   color: var(--fg-muted);
@@ -89,23 +85,10 @@
 .link:hover { color: var(--fg); }
 .link[data-active="true"] { color: var(--fg); }
 
-/* the lozenge slides between items rather than each item lighting up on its own */
-.marker {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  border-radius: var(--r-full);
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  opacity: 0;
-  pointer-events: none;
-}
+
 
 .cta {
   position: relative;
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: var(--s3);
