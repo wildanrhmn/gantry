@@ -1,0 +1,54 @@
+"Running totals for the whole indexed window, so the site can show a live scan size."
+type Scan @entity(immutable: false) {
+  id: Bytes!
+  swaps: BigInt!
+  sandwiches: BigInt!
+  addresses: BigInt!
+  firstBlock: BigInt!
+  lastBlock: BigInt!
+}
+
+"An address that called the PoolManager on Ethereum mainnet."
+type MainnetTrader @entity(immutable: false) {
+  id: Bytes!
+  swaps: BigInt!
+  "Distinct blocks it traded in."
+  blocks: BigInt!
+  "Times it opened and closed a position around somebody else's trade in one block."
+  sandwiches: BigInt!
+  "How many other traders it caught doing so."
+  victims: BigInt!
+  "Opposite-direction pairs in one block and pool, sandwich or not."
+  roundTrips: BigInt!
+  "Distinct transaction senders behind it. Many means shared infrastructure."
+  originators: BigInt!
+  firstBlock: BigInt!
+  lastBlock: BigInt!
+  "Highest tier the published rules give this address. Shared infrastructure stays unknown."
+  tier: Int!
+  sharedInfrastructure: Boolean!
+}
+
+"One (caller, transaction sender) pair, so distinct originators can be counted."
+type OriginatorLink @entity(immutable: true) {
+  id: Bytes!
+}
+
+"Swaps in one block and pool, in the order they were emitted."
+type BlockPool @entity(immutable: false) {
+  id: Bytes!
+  swaps: [RawSwap!]!
+}
+
+type RawSwap @entity(immutable: false) {
+  id: Bytes!
+  pool: BlockPool!
+  caller: Bytes!
+  originator: Bytes!
+  zeroForOne: Boolean!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  logIndex: BigInt!
+  "Set once this swap has been counted as the closing leg of a sandwich."
+  consumed: Boolean!
+}
