@@ -15,6 +15,12 @@ export type AddressFeatures = {
   originators: number;
   firstBlock: number;
   lastBlock: number;
+  /**
+   * Transactions that reached the PoolManager and reverted. Read from transaction
+   * traces, so it exists only because the pipeline is Substreams: a reverted
+   * transaction writes no logs, and an event indexer never sees it happen.
+   */
+  failedAttempts: number;
 };
 
 /**
@@ -29,6 +35,8 @@ export type ScoringParams = {
   cleanMinSwaps: number;
   cleanMinBlockSpan: number;
   sharedInfraMinOriginators: number;
+  suspectedMinFailedAttempts: number;
+  cleanMaxFailedAttempts: number;
 };
 
 export const TIER_CLEAN = 0;
@@ -49,8 +57,18 @@ export const scoreAddress = (f: AddressFeatures, p: ScoringParams): number => {
   const perBlock = f.blocks === 0 ? 0 : f.roundTrips / f.blocks;
   if (perBlock >= p.suspectedRoundTripsPerBlock) return TIER_SUSPECTED;
 
+  // Repeatedly reverting inside the PoolManager is what a bot racing for a position
+  // looks like when it loses. Only a trace-level pipeline can count those.
+  if (f.failedAttempts >= p.suspectedMinFailedAttempts) return TIER_SUSPECTED;
+
   const span = f.lastBlock - f.firstBlock;
-  if (f.swaps >= p.cleanMinSwaps && span >= p.cleanMinBlockSpan) return TIER_CLEAN;
+  if (
+    f.swaps >= p.cleanMinSwaps &&
+    span >= p.cleanMinBlockSpan &&
+    f.failedAttempts <= p.cleanMaxFailedAttempts
+  ) {
+    return TIER_CLEAN;
+  }
 
   return TIER_UNKNOWN;
 };

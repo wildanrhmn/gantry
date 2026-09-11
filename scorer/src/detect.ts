@@ -123,7 +123,12 @@ function countRoundTrips(swaps: Swap[]): Map<string, number> {
   return counts;
 }
 
-export function buildFeatures(swaps: Swap[], sandwiches = detectSandwiches(swaps)): AddressFeatures[] {
+export function buildFeatures(
+  swaps: Swap[],
+  sandwiches = detectSandwiches(swaps),
+  /** Reverted PoolManager transactions per address, which only traces can supply. */
+  failedAttempts: Map<string, number> = new Map(),
+): AddressFeatures[] {
   const roundTrips = countRoundTrips(swaps);
   const acc = new Map<string, AddressFeatures & { blockSet: Set<number>; originatorSet: Set<string> }>();
 
@@ -134,6 +139,7 @@ export function buildFeatures(swaps: Swap[], sandwiches = detectSandwiches(swaps
       entry = {
         address,
         originators: 0,
+        failedAttempts: 0,
         swaps: 0,
         blocks: 0,
         sandwiches: 0,
@@ -164,5 +170,6 @@ export function buildFeatures(swaps: Swap[], sandwiches = detectSandwiches(swaps
     ...rest,
     blocks: blockSet.size,
     originators: originatorSet.size,
+    failedAttempts: failedAttempts.get(rest.address) ?? 0,
   }));
 }

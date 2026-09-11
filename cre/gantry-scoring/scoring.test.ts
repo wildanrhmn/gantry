@@ -19,6 +19,8 @@ const PARAMS: ScoringParams = {
   cleanMinSwaps: 20,
   cleanMinBlockSpan: 5_000,
   sharedInfraMinOriginators: 5,
+  suspectedMinFailedAttempts: 20,
+  cleanMaxFailedAttempts: 2,
 };
 
 function features(partial: Partial<AddressFeatures> = {}): AddressFeatures {
@@ -30,6 +32,7 @@ function features(partial: Partial<AddressFeatures> = {}): AddressFeatures {
     victimsHarmed: 0,
     roundTrips: 0,
     originators: 1,
+    failedAttempts: 0,
     firstBlock: 0,
     lastBlock: 0,
     ...partial,
@@ -79,4 +82,9 @@ test("the report encodes as the receiver decodes it", () => {
   ]);
   assert.ok(encoded.startsWith("0x"));
   assert.ok(encoded.toLowerCase().includes("aa"));
+});
+
+test("reverted attempts count against an address that no subgraph could see", () => {
+  const racer = features({ swaps: 50, blocks: 50, lastBlock: 10_000, failedAttempts: 60 });
+  assert.equal(scoreAddress(racer, PARAMS), TIER_SUSPECTED);
 });

@@ -39,7 +39,7 @@ export type Config = {
 
 const FEATURES_QUERY = `query($n: Int!) {
   traders(first: $n, orderBy: swaps, orderDirection: desc) {
-    id swaps blocks sandwiches victimsHarmed roundTrips originators firstBlock lastBlock
+    id swaps blocks sandwiches victimsHarmed roundTrips originators firstBlock lastBlock failedAttempts
   }
 }`;
 
@@ -73,6 +73,8 @@ export const fetchFeatures = (
     originators: Number(t.originators ?? 0),
     firstBlock: Number(t.firstBlock ?? 0),
     lastBlock: Number(t.lastBlock ?? 0),
+    // Reverted PoolManager calls, read from traces by Substreams. No subgraph has it.
+    failedAttempts: Number(t.failedAttempts ?? 0),
   }));
 };
 

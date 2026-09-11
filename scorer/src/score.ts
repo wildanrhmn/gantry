@@ -23,6 +23,8 @@ export interface ScoringParams {
   suspectedRoundTripsPerBlock: number;
   cleanMinSwaps: number;
   cleanMinBlockSpan: number;
+  suspectedMinFailedAttempts: number;
+  cleanMaxFailedAttempts: number;
 }
 
 export const DEFAULT_PARAMS: ScoringParams = {
@@ -31,6 +33,8 @@ export const DEFAULT_PARAMS: ScoringParams = {
   suspectedRoundTripsPerBlock: 0.5,
   cleanMinSwaps: 20,
   cleanMinBlockSpan: 5_000,
+  suspectedMinFailedAttempts: 20,
+  cleanMaxFailedAttempts: 2,
 };
 
 export function scoreAddress(features: AddressFeatures, params: ScoringParams = DEFAULT_PARAMS): TierValue {
@@ -44,8 +48,18 @@ export function scoreAddress(features: AddressFeatures, params: ScoringParams = 
   const perBlock = features.blocks === 0 ? 0 : features.roundTrips / features.blocks;
   if (perBlock >= params.suspectedRoundTripsPerBlock) return Tier.Suspected;
 
+  // Repeatedly reverting inside the PoolManager is what a bot racing for a position
+  // looks like when it loses. Only a trace-level pipeline can count those.
+  if (features.failedAttempts >= params.suspectedMinFailedAttempts) return Tier.Suspected;
+
   const span = features.lastBlock - features.firstBlock;
-  if (features.swaps >= params.cleanMinSwaps && span >= params.cleanMinBlockSpan) return Tier.Clean;
+  if (
+    features.swaps >= params.cleanMinSwaps &&
+    span >= params.cleanMinBlockSpan &&
+    features.failedAttempts <= params.cleanMaxFailedAttempts
+  ) {
+    return Tier.Clean;
+  }
 
   // Anything we have not seen enough of stays unknown. Never clean by default.
   return Tier.Unknown;

@@ -31,6 +31,8 @@ export interface AddressFeatures {
   lastBlock: number;
   /** How many distinct EOAs traded through this address. */
   originators: number;
+  /** Transactions that reached the PoolManager and reverted. Trace-level, never logged. */
+  failedAttempts: number;
 }
 
 export const Tier = {

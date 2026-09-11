@@ -5,14 +5,24 @@ import { DEFAULT_PARAMS, isSharedInfrastructure, scoreAddress } from "./score.ts
 
 const input = process.argv[2];
 const output = process.argv[3] ?? "features.json";
+const attemptsFile = process.argv[4];
 if (!input) {
-  console.error("usage: node src/build-dataset.ts <substreams-output.json> [out.json]");
+  console.error("usage: node src/build-dataset.ts <swaps.jsonl> [out.json] [attempts.json]");
   process.exit(1);
 }
 
+/** map_attempts output, keyed by contract. Absent means the scan ran without traces. */
+const failedAttempts = new Map<string, number>(
+  attemptsFile
+    ? Object.entries(
+        JSON.parse(readFileSync(attemptsFile, "utf8")).perAddress as Record<string, number>,
+      )
+    : [],
+);
+
 const swaps = parseSubstreamsOutput(readFileSync(input, "utf8"));
 const sandwiches = detectSandwiches(swaps);
-const features = buildFeatures(swaps, sandwiches);
+const features = buildFeatures(swaps, sandwiches, failedAttempts);
 
 const blocks = swaps.map((s) => s.blockNumber);
 const dataset = {

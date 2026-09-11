@@ -14,6 +14,7 @@ function features(partial: Partial<AddressFeatures> = {}): AddressFeatures {
     firstBlock: 0,
     lastBlock: 0,
     originators: 1,
+    failedAttempts: 0,
     ...partial,
   };
 }
@@ -81,4 +82,20 @@ test("routers are left out of what gets written on chain", () => {
   const publishable = publishableTiers(rows);
   assert.equal(publishable.has("0xrouter"), false);
   assert.equal(publishable.get("0xbot"), Tier.Extractor);
+});
+
+test("losing a lot of races inside the pool manager is itself a signal", () => {
+  // Nothing here is visible to an event indexer: every one of these reverted.
+  const racer = features({ swaps: 40, blocks: 40, firstBlock: 0, lastBlock: 9_000, failedAttempts: 60 });
+  assert.equal(scoreAddress(racer), Tier.Suspected);
+});
+
+test("a long clean history with a few reverts still prices clean", () => {
+  const trader = features({ swaps: 40, blocks: 40, firstBlock: 0, lastBlock: 9_000, failedAttempts: 1 });
+  assert.equal(scoreAddress(trader), Tier.Clean);
+});
+
+test("reverts never override a shared router", () => {
+  const router = features({ originators: 1_319, swaps: 3_580, failedAttempts: 649 });
+  assert.equal(scoreAddress(router), Tier.Unknown);
 });
