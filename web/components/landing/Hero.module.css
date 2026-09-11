@@ -5,16 +5,16 @@
   align-items: center;
   overflow: hidden;
   border-bottom: 1px solid var(--border);
-  background: var(--umbra);
+  background: var(--ground);
 }
 
 .blueprint { position: absolute; inset: 0; pointer-events: none; }
 
-/* one warm wash across the field, then the umbra closes back in top and bottom */
+/* one warm wash across the field, then the dark closes back in top and bottom */
 .wash {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #60495a2b, transparent 52%, #3f32442b);
+  background: linear-gradient(135deg, #3c404d38, transparent 52%, #23262f45);
   filter: blur(64px);
   pointer-events: none;
 }
@@ -22,8 +22,8 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(0deg, var(--umbra), transparent 38%, transparent 60%, var(--umbra)),
-    radial-gradient(ellipse 80% 66% at 50% 46%, transparent 42%, #241a2bb8 100%);
+    linear-gradient(0deg, var(--ground), transparent 38%, transparent 60%, var(--ground)),
+    radial-gradient(ellipse 80% 66% at 50% 46%, transparent 42%, #0f1015c4 100%);
   pointer-events: none;
 }
 
@@ -32,8 +32,8 @@
 .shape {
   position: absolute;
   border-radius: var(--r-full);
-  border: 1px solid rgba(191, 195, 186, 0.05);
-  box-shadow: 0 8px 32px 0 rgba(191, 195, 186, 0.04);
+  border: 1px solid rgba(220, 216, 207, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(220, 216, 207, 0.04);
   filter: blur(1px);
   animation: drift 14s ease-in-out infinite;
 }
@@ -42,7 +42,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at 50% 50%, rgba(191, 195, 186, 0.07), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(220, 216, 207, 0.07), transparent 70%);
 }
 @keyframes drift {
   0%, 100% { transform: translateY(0) rotate(var(--tilt)); }
@@ -81,8 +81,8 @@
   -webkit-background-clip: text;
   background-clip: text;
 }
-.title span { background-image: linear-gradient(180deg, #a9aca9, #bfc3ba); }
-.title em { background-image: linear-gradient(100deg, #bfc3ba, #a9aca9 46%, #7a6070); }
+.title span { background-image: linear-gradient(180deg, #b6b2a9, var(--bone)); }
+.title em { background-image: linear-gradient(100deg, var(--bone), #c0a878 46%, #8a7446); }
 
 .card { margin-top: var(--s12); width: 100%; text-align: left; }
 

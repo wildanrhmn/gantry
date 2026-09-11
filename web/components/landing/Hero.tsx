@@ -8,11 +8,11 @@ import styles from "./Hero.module.css";
 
 /** Bars of light: size, tilt, where they sit, and the colour they fade out of. */
 const SHAPES = [
-  { w: 600, h: 140, tilt: "12deg", pos: { left: "-6%", top: "18%" }, from: "#60495a4d", delay: "0s" },
-  { w: 500, h: 120, tilt: "-15deg", pos: { right: "-4%", top: "70%" }, from: "#a9aca924", delay: "1.1s" },
-  { w: 300, h: 80, tilt: "-8deg", pos: { left: "8%", bottom: "6%" }, from: "#bfc3ba1f", delay: "2.2s" },
-  { w: 220, h: 64, tilt: "20deg", pos: { right: "18%", top: "12%" }, from: "#3f324473", delay: "0.6s" },
-  { w: 160, h: 44, tilt: "-25deg", pos: { left: "24%", top: "8%" }, from: "#60495a38", delay: "1.7s" },
+  { w: 600, h: 140, tilt: "12deg", pos: { left: "-6%", top: "18%" }, from: "#3c404d5c", delay: "0s" },
+  { w: 500, h: 120, tilt: "-15deg", pos: { right: "-4%", top: "70%" }, from: "#dcd8cf1f", delay: "1.1s" },
+  { w: 300, h: 80, tilt: "-8deg", pos: { left: "8%", bottom: "6%" }, from: "#dcd8cf1a", delay: "2.2s" },
+  { w: 220, h: 64, tilt: "20deg", pos: { right: "18%", top: "12%" }, from: "#23262f8c", delay: "0.6s" },
+  { w: 160, h: 44, tilt: "-25deg", pos: { left: "24%", top: "8%" }, from: "#3c404d40", delay: "1.7s" },
 ] as const;
 
 export function Hero({ cars }: { cars: LaneCar[] }) {

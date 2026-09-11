@@ -1,0 +1,30 @@
+.tape {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--ground-2);
+  overflow: hidden;
+}
+.run {
+  display: flex;
+  width: max-content;
+  animation: run 46s linear infinite;
+}
+.run:hover { animation-play-state: paused; }
+@keyframes run {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.set {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding: 10px 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.item { display: flex; align-items: center; }
+.slash { margin-left: var(--s8); color: var(--fg-faint); }
+.key { margin-left: var(--s3); color: var(--fg-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+.value { margin-left: var(--s2); color: var(--fg); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .run { animation: none; } }

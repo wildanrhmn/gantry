@@ -13,7 +13,7 @@ const RATE = 4000;
 const HOLD = 3.4;
 
 const FEE_BPS = [5, 30, 60, 100];
-const TINT = ["#9fc2a8", "#8d7f99", "#cfa77c", "#cf7d8d"];
+const TINT = ["#86bd9b", "#8b90a3", "#cf9257", "#cb7b81"];
 
 const plate = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 

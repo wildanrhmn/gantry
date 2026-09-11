@@ -1,50 +1,52 @@
 :root {
-  /* Eclipse scale: a warm plum ground lit by ash, never black lit by white. */
-  --umbra: #2f2235;
-  --umbra-2: #271b2d;
-  --penumbra: #372a3d;
-  --grape: #3f3244;
-  --antumbra: #493c50;
-  --mauve: #60495a;
-  --corona: #bfc3ba;
+  /* Gantry's own scale: a road at night. Warm graphite ground, bone light,
+     one amber signal borrowed from the sign a real gantry carries. */
+  --ground: #17181e;
+  --ground-2: #111219;
+  --panel: #1d1f27;
+  --panel-2: #23262f;
+  --line: #2d3039;
+  --edge: #3c404d;
+  --bone: #dcd8cf;
+  --amber: #d9a441;
 
-  --brand: #8d7f99;
-  --brand-light: #bfc3ba;
-  --brand-medium: #6f5668;
-  --brand-strong: var(--mauve);
-  --brand-soft: #60495a52;
-  --brand-softer: #60495a2e;
+  --brand: #8b90a3;
+  --brand-light: var(--bone);
+  --brand-medium: #6d7385;
+  --brand-strong: var(--edge);
+  --brand-soft: #8b90a340;
+  --brand-softer: #8b90a324;
 
-  --page: var(--umbra);
-  --card: var(--grape);
-  --card-soft: var(--penumbra);
-  --control-fill: var(--penumbra);
-  --hover-fill: var(--grape);
-  --border: var(--antumbra);
-  --border-subtle: var(--grape);
+  --page: var(--ground);
+  --card: var(--panel);
+  --card-soft: var(--panel-2);
+  --control-fill: var(--panel);
+  --hover-fill: var(--panel-2);
+  --border: var(--line);
+  --border-subtle: #262931;
 
-  /* Tiers stay distinguishable but sit in the same desaturated family as the page. */
-  --success: #9fc2a8;
-  --success-strong: #8bb094;
-  --success-soft: #9fc2a81f;
-  --danger: #cf7d8d;
-  --danger-strong: #b96a7a;
-  --danger-soft: #cf7d8d1f;
-  --warning: #cfa77c;
-  --warning-soft: #cfa77c1f;
+  /* Tiers stay legible apart without any of them shouting. */
+  --success: #86bd9b;
+  --success-strong: #73a889;
+  --success-soft: #86bd9b1f;
+  --danger: #cb7b81;
+  --danger-strong: #b76a71;
+  --danger-soft: #cb7b811f;
+  --warning: #cf9257;
+  --warning-soft: #cf92571f;
 
-  --asphalt: var(--umbra-2);
-  --asphalt-haze: #221729;
-  --asphalt-line: var(--antumbra);
-  --steel: var(--penumbra);
-  --steel-edge: var(--mauve);
-  --led: #cfa77c;
-  --led-glow: #cfa77c59;
+  --asphalt: var(--ground-2);
+  --asphalt-haze: #0d0e14;
+  --asphalt-line: var(--line);
+  --steel: var(--panel);
+  --steel-edge: var(--edge);
+  --led: var(--amber);
+  --led-glow: #d9a44159;
 
-  --fg: var(--corona);
-  --fg-muted: #a9aca9;
-  --fg-dim: #837e88;
-  --fg-faint: #5e5266;
+  --fg: var(--bone);
+  --fg-muted: #a8a69f;
+  --fg-dim: #7c7e86;
+  --fg-faint: #565963;
 
   --font-display: "Archivo";
   --font-body: "Instrument Sans";
@@ -78,7 +80,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: rgba(96, 73, 90, 0.45); color: var(--corona); }
+::selection { background: rgba(217, 164, 65, 0.28); color: var(--bone); }
 
 :focus-visible {
   outline: 2px solid var(--brand);
@@ -126,18 +128,18 @@ body {
   .page { padding: calc(var(--nav-h) + var(--s5)) var(--s4) var(--s24); }
 }
 
-/* Light falls from one source above and dies into the umbra at the edges. */
+/* Light falls from one source above and dies out at the edges. */
 .field {
   background:
-    radial-gradient(116% 84% at 50% -6%, rgba(191, 195, 186, 0.05) 0%, rgba(191, 195, 186, 0.016) 20%, transparent 52%),
-    radial-gradient(90% 70% at 50% 34%, #3a2c43 0%, #251a2c 46%, var(--umbra) 100%);
+    radial-gradient(116% 84% at 50% -6%, rgba(220, 216, 207, 0.05) 0%, rgba(220, 216, 207, 0.015) 20%, transparent 52%),
+    radial-gradient(90% 70% at 50% 34%, #1f212a 0%, #14151b 46%, var(--ground) 100%);
 }
 
 /* An engineering grid, faded at the frame edges so it never reads as a template. */
 .blueprint {
   background-image:
-    linear-gradient(rgba(191, 195, 186, 0.026) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(191, 195, 186, 0.026) 1px, transparent 1px);
+    linear-gradient(rgba(220, 216, 207, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(220, 216, 207, 0.028) 1px, transparent 1px);
   background-size: 48px 48px;
   -webkit-mask-image: radial-gradient(130% 100% at 50% 0%, #000 30%, transparent 82%);
   mask-image: radial-gradient(130% 100% at 50% 0%, #000 30%, transparent 82%);
@@ -164,6 +166,6 @@ body::before {
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--grape); }
-::-webkit-scrollbar-thumb { background: var(--antumbra); }
-::-webkit-scrollbar-thumb:hover { background: var(--mauve); }
+::-webkit-scrollbar-track { background: var(--panel); }
+::-webkit-scrollbar-thumb { background: var(--line); }
+::-webkit-scrollbar-thumb:hover { background: var(--edge); }

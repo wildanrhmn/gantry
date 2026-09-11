@@ -1,62 +1,43 @@
-import Link from "next/link";
 import { Hero } from "@/components/landing/Hero";
+import { Marquee } from "@/components/landing/Marquee";
 import { ScanBand } from "@/components/landing/ScanBand";
+import { BuiltOn, FinalCta, Mechanism, Problem, Proof } from "@/components/landing/Sections";
 import { laneSample } from "@/lib/mainnet";
-import { scanWindow, worstOffenders } from "@/lib/lookup";
-import { tier as tierOf } from "@/lib/tiers";
-import table from "@/components/Table.module.css";
+import { scanWindow } from "@/lib/lookup";
 
 export const revalidate = 30;
 
-/** Shown while the indexer is unreachable, so the lane is never empty on screen. */
-const PLACEHOLDER = [
-  { address: "0x0000000000000000000000000000000000000000", tier: 1 },
-];
+/** Shown while the indexer is unreachable, so the card is never empty on screen. */
+const PLACEHOLDER = [{ address: "0x0000000000000000000000000000000000000000", tier: 1 }];
 
 export default async function Home() {
-  const [scan, worst, lane] = await Promise.all([scanWindow(), worstOffenders(8), laneSample()]);
+  const [scan, lane] = await Promise.all([scanWindow(), laneSample()]);
   const cars = lane.length ? lane.map((r) => ({ address: r.id, tier: r.tier })) : PLACEHOLDER;
+  const count = (v: number) => v.toLocaleString("en-US");
+
+  const tape: [string, string][] = [
+    ["swaps read", count(scan.swaps)],
+    ["sandwiches found", count(scan.sandwiches)],
+    ["addresses scored", count(scan.addresses)],
+    ["indexed to block", count(scan.toBlock)],
+    ["reverted attempts", "2,827"],
+    ["clean pays", "0.05%"],
+    ["extractor pays", "1.00%"],
+    ["venue", "Uniswap v4"],
+    ["data", "The Graph"],
+    ["scoring", "Chainlink CRE"],
+  ];
 
   return (
     <>
       <Hero cars={cars} />
+      <Marquee items={tape} />
+      <Problem scan={scan} />
+      <Mechanism />
+      <Proof />
       <ScanBand stats={scan} cars={cars} />
-
-      <main className="page">
-        <section className="section">
-          <p className="eyebrow">Already found</p>
-          <h2 className="display h3">Addresses the scan priced up</h2>
-          <p className="lede">
-            From {scan.swaps.toLocaleString()} swaps across{" "}
-            {(scan.toBlock - scan.fromBlock).toLocaleString()} blocks of Ethereum mainnet, read
-            live at block {scan.toBlock.toLocaleString()}. {scan.sandwiches.toLocaleString()}{" "}
-            sandwich-shaped sequences, attributed only where one originator was behind both legs.
-          </p>
-          <table className={table.table}>
-            <thead>
-              <tr>
-                <th>Address</th>
-                <th>Tier</th>
-                <th className={table.right}>Sandwiches</th>
-              </tr>
-            </thead>
-            <tbody>
-              {worst.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <Link href={`/address/${r.id}`} className={table.link}>{r.id}</Link>
-                    <span className={table.note}>{r.originators} originator{r.originators === "1" ? "" : "s"}</span>
-                  </td>
-                  <td>
-                    <span className={`${table.badge} ${table[`t${r.tier}`]}`}>{tierOf(r.tier).name}</span>
-                  </td>
-                  <td className={table.right}>{r.sandwiches}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      </main>
+      <BuiltOn />
+      <FinalCta />
     </>
   );
 }

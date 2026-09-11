@@ -1,0 +1,149 @@
+.section { border-bottom: 1px solid var(--border); position: relative; }
+.inner { max-width: 1120px; margin: 0 auto; padding: var(--s20) var(--s6); }
+.grid { position: absolute; inset: 0; pointer-events: none; }
+
+/* the numbered rule that opens every section */
+.tag { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s8); }
+.tagDot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); flex: none; }
+.tagNum,
+.tagText {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+.tagText { letter-spacing: 0.2em; text-transform: uppercase; }
+.tagRule { flex: 1; height: 1px; background: var(--border); }
+
+.h2 {
+  font-family: var(--font-display), sans-serif;
+  font-variation-settings: "wdth" 106;
+  font-weight: 700;
+  font-size: clamp(26px, 3.4vw, 42px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  margin: 0;
+  max-width: 22ch;
+}
+.h2 em { font-style: normal; color: var(--amber); }
+.h2Wide { max-width: 30ch; }
+.body { color: var(--fg-muted); font-size: 15px; line-height: 1.65; margin: 0; }
+
+.split { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--s10); align-items: start; }
+
+/* hairline cells sharing one background, so the seams read as engineering */
+.cells {
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-top: var(--s12);
+}
+.cells4 { grid-template-columns: repeat(4, 1fr); }
+.cells3 { grid-template-columns: repeat(3, 1fr); }
+.cells > * { height: 100%; }
+.cell { background: var(--ground); padding: var(--s5); }
+.cellTall { background: var(--ground); padding: var(--s7); height: 100%; transition: background 200ms ease; }
+.cellTall:hover { background: var(--panel); }
+
+.figure {
+  font-family: var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(22px, 2.6vw, 30px);
+  color: var(--fg);
+  line-height: 1.1;
+}
+.figure[data-tone="warn"] { color: var(--warning); }
+.figure[data-tone="bad"] { color: var(--danger); }
+.figure[data-tone="good"] { color: var(--success); }
+.note {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  margin-top: var(--s2);
+  line-height: 1.5;
+}
+
+.stepTop { display: flex; align-items: center; justify-content: space-between; }
+.stepNum { font-family: var(--font-mono), monospace; font-size: 11px; color: var(--fg-faint); }
+.stepTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  margin: var(--s5) 0 0;
+}
+.stepBody { color: var(--fg-muted); font-size: 14px; line-height: 1.65; margin: var(--s3) 0 0; }
+.chipTag {
+  display: inline-block;
+  margin-top: var(--s5);
+  padding: 4px var(--s3);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+/* the rule block: the fee ladder, stated once */
+.ladder {
+  margin-top: var(--s10);
+  border: 1px solid var(--border);
+  background: var(--ground-2);
+  padding: var(--s7);
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: var(--s8);
+  align-items: center;
+}
+.rungs { display: grid; gap: var(--s3); }
+.rung { display: flex; align-items: center; gap: var(--s4); font-family: var(--font-mono), monospace; font-size: 13px; }
+/* a fixed track, so the bars vary in length but the labels still line up */
+.rungTrack { width: 128px; flex: none; }
+.rungBar { display: block; height: 8px; border-radius: 2px; }
+.rungName { color: var(--fg-muted); width: 84px; }
+.rungFee { color: var(--fg); font-variant-numeric: tabular-nums; width: 56px; }
+
+.callout {
+  margin-top: var(--s6);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--amber);
+  background: var(--ground-2);
+  padding: var(--s6);
+}
+
+.actions { margin-top: var(--s10); display: flex; flex-wrap: wrap; gap: var(--s3); }
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  height: 46px;
+  padding: 0 var(--s6);
+  border-radius: 10px;
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+.primary { background: var(--amber); color: #1a1509; font-weight: 500; }
+.primary:hover { background: #e8b558; }
+.secondary { border: 1px solid var(--edge); color: var(--fg); }
+.secondary:hover { border-color: var(--amber); color: var(--amber); }
+
+.centred { text-align: center; }
+.centred .h2 { margin: 0 auto; max-width: 18ch; }
+.centred .body { margin: var(--s6) auto 0; max-width: 52ch; }
+.centred .actions { justify-content: center; }
+
+@media (max-width: 900px) {
+  .split { grid-template-columns: 1fr; gap: var(--s6); }
+  .cells4 { grid-template-columns: repeat(2, 1fr); }
+  .cells3 { grid-template-columns: 1fr; }
+  .ladder { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .inner { padding: var(--s16) var(--s4); }
+  .cells { margin-top: var(--s8); }
+}
