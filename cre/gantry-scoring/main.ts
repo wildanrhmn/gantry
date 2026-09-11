@@ -31,65 +31,83 @@ type EvmWriteConfig = {
 
 export type Config = {
   schedule: string;
-  features_url: string;
+  /** The behaviour subgraph. Read straight from The Graph, not from a server of ours. */
+  subgraph_url: string;
+  /** Reverted PoolManager calls per address, the Substreams run committed to the repo. */
+  traces_url: string;
   max_addresses: number;
-  secrets_ids: { scoring_params_id: string; features_key_id: string };
+  secrets_ids: { scoring_params_id: string };
   evms?: EvmWriteConfig[];
 };
 
 const FEATURES_QUERY = `query($n: Int!) {
-  traders(first: $n, orderBy: swaps, orderDirection: desc) {
-    id swaps blocks sandwiches victimsHarmed roundTrips originators firstBlock lastBlock failedAttempts
+  mainnetTraders(first: $n, orderBy: swaps, orderDirection: desc) {
+    id swaps blocks sandwiches victims roundTrips originators firstBlock lastBlock
   }
 }`;
 
+const text = (body: Uint8Array) => new TextDecoder().decode(body);
+
+/**
+ * Behaviour comes from the subgraph; reverted attempts come from the Substreams run.
+ * They are separate calls because they are separate capabilities: a reverted
+ * transaction writes no logs, so the subgraph structurally cannot report one.
+ */
 export const fetchFeatures = (
   runtime: TeeRuntime<Config>,
   client: HTTPClient,
-  url: string,
-  apiKey: string,
+  subgraphUrl: string,
+  tracesUrl: string,
   limit: number,
 ): AddressFeatures[] => {
-  const response = client
+  const behaviour = client
     .sendRequest(runtime, {
-      url,
+      url: subgraphUrl,
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+      headers: { "content-type": "application/json" },
       body: new TextEncoder().encode(JSON.stringify({ query: FEATURES_QUERY, variables: { n: limit } })),
     })
     .result();
 
-  const decoded = JSON.parse(new TextDecoder().decode(response.body)) as {
-    data?: { traders?: Record<string, string>[] };
-  };
+  const traces = client.sendRequest(runtime, { url: tracesUrl, method: "GET" }).result();
 
-  return (decoded.data?.traders ?? []).map((t) => ({
+  const decoded = JSON.parse(text(behaviour.body)) as {
+    data?: { mainnetTraders?: Record<string, string>[] };
+  };
+  const reverts = (JSON.parse(text(traces.body)) as { perAddress?: Record<string, number> })
+    .perAddress ?? {};
+
+  return (decoded.data?.mainnetTraders ?? []).map((t) => ({
     address: t.id,
     swaps: Number(t.swaps ?? 0),
     blocks: Number(t.blocks ?? 0),
     sandwiches: Number(t.sandwiches ?? 0),
-    victimsHarmed: Number(t.victimsHarmed ?? 0),
+    victimsHarmed: Number(t.victims ?? 0),
     roundTrips: Number(t.roundTrips ?? 0),
     originators: Number(t.originators ?? 0),
     firstBlock: Number(t.firstBlock ?? 0),
     lastBlock: Number(t.lastBlock ?? 0),
-    // Reverted PoolManager calls, read from traces by Substreams. No subgraph has it.
-    failedAttempts: Number(t.failedAttempts ?? 0),
+    failedAttempts: Number(reverts[t.id] ?? 0),
   }));
 };
 
 export const onCronTrigger = async (runtime: TeeRuntime<Config>): Promise<string> => {
-  const { features_url, max_addresses, secrets_ids, evms } = runtime.config;
+  const { subgraph_url, traces_url, max_addresses, secrets_ids, evms } = runtime.config;
 
   const secrets = runtime
-    .getSecrets([{ id: secrets_ids.scoring_params_id }, { id: secrets_ids.features_key_id }])
+    .getSecrets([{ id: secrets_ids.scoring_params_id }])
     .result();
 
   const params = JSON.parse(secrets[secrets_ids.scoring_params_id].value) as ScoringParams;
-  const featuresKey = secrets[secrets_ids.features_key_id].value;
   runtime.log("gantry-secrets-ok");
 
-  const features = fetchFeatures(runtime, new HTTPClient(), features_url, featuresKey, max_addresses);
+  const features = fetchFeatures(
+    runtime,
+    new HTTPClient(),
+    subgraph_url,
+    traces_url,
+    max_addresses,
+  );
 
   // Shared infrastructure is dropped rather than published as neutral, so a router
   // never occupies a slot in the report at all.
@@ -158,21 +176,18 @@ export const buildRestrictions = (config: Config) => {
       restrictions,
     },
     secrets: {
-      maxSecrets: 2,
-      restrictions: [
-        { exactSecret: { id: secrets_ids.scoring_params_id, namespace: "main" } },
-        { exactSecret: { id: secrets_ids.features_key_id, namespace: "main" } },
-      ],
+      maxSecrets: 1,
+      restrictions: [{ exactSecret: { id: secrets_ids.scoring_params_id, namespace: "main" } }],
     },
   };
 };
 
 export const initWorkflow = (config: Config): Workflow<Config> => {
-  if (!config.schedule || !config.features_url) {
-    throw new Error("config requires schedule and features_url");
+  if (!config.schedule || !config.subgraph_url || !config.traces_url) {
+    throw new Error("config requires schedule, subgraph_url and traces_url");
   }
-  if (!config.secrets_ids?.scoring_params_id || !config.secrets_ids?.features_key_id) {
-    throw new Error("config requires secrets_ids fields");
+  if (!config.secrets_ids?.scoring_params_id) {
+    throw new Error("config requires secrets_ids.scoring_params_id");
   }
 
   const cron = new CronCapability();
@@ -187,12 +202,10 @@ export const initWorkflow = (config: Config): Workflow<Config> => {
 /** Used when the runtime hands the workflow an empty config, as it does in simulation. */
 const DEFAULT_CONFIG: Config = {
   schedule: "0 */15 * * * *",
-  features_url: "http://127.0.0.1:8799/graphql",
+  subgraph_url: "http://127.0.0.1:8799/graphql",
+  traces_url: "http://127.0.0.1:8799/traces.json",
   max_addresses: 50,
-  secrets_ids: {
-    scoring_params_id: "gantry_scoring_params",
-    features_key_id: "gantry_features_key",
-  },
+  secrets_ids: { scoring_params_id: "gantry_scoring_params" },
   evms: [
     {
       chain_selector_name: "ethereum-testnet-sepolia",

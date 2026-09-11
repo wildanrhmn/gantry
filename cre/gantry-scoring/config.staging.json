@@ -1,10 +1,8 @@
 {
   "schedule": "0 */15 * * * *",
-  "features_url": "https://<your-deployment>/api/features",
-  "secrets_ids": {
-    "scoring_params_id": "gantry_scoring_params",
-    "features_key_id": "gantry_features_key"
-  },
+  "subgraph_url": "https://api.studio.thegraph.com/query/1760064/gantry-mainnet/v0.0.2",
+  "traces_url": "https://raw.githubusercontent.com/wildanrhmn/gantry/master/web/data/failed-attempts.json",
+  "secrets_ids": { "scoring_params_id": "gantry_scoring_params" },
   "max_addresses": 50,
   "evms": [
     {

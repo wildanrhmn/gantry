@@ -1,25 +1,27 @@
-Confidential Workflow simulation - Gantry tier scoring
-Run with: cre workflow simulate ./gantry-scoring --target local-simulation --trigger-index 0
+Gantry - Chainlink CRE Confidential Workflow
+Captured 2026-09-11 13:05 UTC by: cre workflow simulate --target staging-settings gantry-scoring
 
-The features endpoint is served locally with figures taken from a real scan of
-mainnet blocks 25940000-25941500, so the run exercises the shared-infrastructure
-guard against numbers that actually occurred. Five addresses go in; four come out.
-The one dropped is Uniswap's Universal Router, which shows 1319 distinct
-originators and would otherwise have been priced as an extractor.
+The confidential handler scores addresses inside the enclave. The thresholds that
+decide a tier are fetched as a secret in the TEE and never leave it; the scoring
+rules themselves are public in scoring.ts. The tier the enclave returns is what the
+Uniswap v4 hook charges, so the confidential part is the product, not a placeholder.
 
-Initializing...
-Loading settings...
-! Using default private key for chain write simulation. To use your own key, set CRE_ETH_PRIVATE_KEY in your .env file or system environment.
-Checking RPC connectivity...
+Inputs read inside the enclave:
+  behaviour  https://api.studio.thegraph.com/query/1760064/gantry-mainnet/v0.0.2
+  traces     raw.githubusercontent.com/wildanrhmn/gantry/master/web/data/failed-attempts.json
+  secret     gantry_scoring_params  (tier thresholds)
+
+----------------------------------------------------------------------
 Compiling workflow...
 ✓ Workflow compiled
 ✓ Simulation limits enabled
   HTTP: req=120kb resp=250kb timeout=10s | ConfHTTP: req=125kb resp=500kb timeout=1m30s | Consensus obs=25kb | ChainWrite evm_report=50kb evm_gas=10000000 solana_report=265b solana_cu=300000 | WASM binary=100mb compressed=20mb
-  Binary hash: 4599be621841b75aafd5785ed5a956597ad2d4b5b13a697b3158bfaad73b8e7d
-  Config hash: cbee8249bc897f29aae3562f80ba0c2b8e1737ac85c473e0008994078010fa8d
-2026-09-11T02:31:39Z [SIMULATION] Simulator Initialized
+  Binary hash: 9a07eebd18c1c8f9ba5da816869a36861e0b7732d96e2ae45be870d1fb54a169
+  Config hash: ded955476e2ba06975fdca40d97a776a45277ad0dca4d468801589ca6c4992a1
+2026-09-11T20:00:58Z [SIMULATION] Simulator Initialized
 
-2026-09-11T02:31:39Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0
+2026-09-11T20:00:58Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0
+
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ Handler requested TEE Execution                                                                    │
 │ The simulator is not a real TEE, and is meant to debug.                                            │
@@ -29,14 +31,14 @@ Compiling workflow...
 │                                                                                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-2026-09-11T02:31:39Z [USER LOG] gantry-secrets-ok
-2026-09-11T02:31:39Z [USER LOG] gantry-scored addresses=4 of=5
+2026-09-11T20:01:00Z [USER LOG] gantry-secrets-ok
+2026-09-11T20:01:01Z [USER LOG] gantry-scored addresses=13 of=50
 
 ✓ Workflow Simulation Result:
 "0x0000000000000000000000000000000000000000000000000000000000000000"
 
-2026-09-11T02:31:39Z [SIMULATION] Execution finished signal received
-2026-09-11T02:31:39Z [SIMULATION] Skipping WorkflowEngineV2
+2026-09-11T20:01:01Z [SIMULATION] Execution finished signal received
+2026-09-11T20:01:01Z [SIMULATION] Skipping WorkflowEngineV2
 
 ╭──────────────────────────────────────────────────────╮
 │ Simulation complete! Ready to deploy your workflow?  │

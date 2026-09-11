@@ -26,11 +26,21 @@ const traders = [
     firstBlock: 25941400, lastBlock: 25941450, failedAttempts: 0 },
 ];
 
+// reverts live apart from the subgraph, because that is where they live in production too
+const perAddress = Object.fromEntries(
+  traders.filter((t) => t.failedAttempts > 0).map((t) => [t.id, t.failedAttempts]),
+);
+
 createServer((req, res) => {
   let body = "";
   req.on("data", (c) => (body += c));
   req.on("end", () => {
     res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ data: { traders } }));
+    if (req.url?.startsWith("/traces")) return res.end(JSON.stringify({ perAddress }));
+    const mainnetTraders = traders.map(({ victimsHarmed, failedAttempts, ...rest }) => ({
+      ...rest,
+      victims: victimsHarmed,
+    }));
+    res.end(JSON.stringify({ data: { mainnetTraders } }));
   });
-}).listen(8799, () => console.log("features fixtures on :8799"));
+}).listen(8799, () => console.log("fixtures on :8799 (graphql + traces)"));

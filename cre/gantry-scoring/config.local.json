@@ -1,9 +1,9 @@
 {
   "schedule": "0 */15 * * * *",
-  "features_url": "http://127.0.0.1:8799/graphql",
+  "subgraph_url": "http://127.0.0.1:8799/graphql",
+  "traces_url": "http://127.0.0.1:8799/traces.json",
   "secrets_ids": {
-    "scoring_params_id": "gantry_scoring_params",
-    "features_key_id": "gantry_features_key"
+    "scoring_params_id": "gantry_scoring_params"
   },
   "max_addresses": 50,
   "evms": [

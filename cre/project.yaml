@@ -3,9 +3,9 @@ local-simulation:
     - chain-name: ethereum-testnet-sepolia
       url: https://ethereum-sepolia-rpc.publicnode.com
 
-staging:
+staging-settings:
   cre-cli:
     don-family: "zone-a"
   rpcs:
     - chain-name: ethereum-testnet-sepolia
-      url: <YOUR RPC URL>
+      url: https://ethereum-sepolia-rpc.publicnode.com
