@@ -138,9 +138,13 @@ anything about Gantry.
   order of swaps inside a block. Every number on the site comes from here.
 - `indexer/` indexes Gantry's own `Tolled` and `TierSet` events on Sepolia.
 
-Nothing on the site is read from a checked-in dataset. The lookup, the toll feed, the scan
-totals and the features the CRE enclave scores are all queries made when the request arrives -
-the subgraphs over GraphQL, the trace counts from the sink described below.
+Nothing on the site is read from a checked-in dataset. The lookup, the toll feed and the scan
+totals are all queries made when the request arrives - the subgraphs over GraphQL, the trace
+counts from the sink described below.
+
+The CRE enclave reads the behaviour subgraph live on its own schedule. Its second input, the
+reverted-attempt counts, is still the published snapshot rather than the sink, because the
+workflow fetches a URL rather than holding a database connection.
 
 ### The part only Substreams can do
 
