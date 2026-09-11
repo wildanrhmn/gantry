@@ -29,9 +29,6 @@
 }
 .go:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
 .hint { margin: var(--s4) 0 0; font-size: 14px; color: var(--fg-dim); }
-[data-centred] .hint { margin-top: var(--s3); font-size: 12px; }
-[data-centred] .input { text-align: center; }
-[data-centred] .go { padding: 0 var(--s5); font-size: 14px; }
 .hint button {
   font-family: var(--font-mono), monospace;
   font-size: 13px;

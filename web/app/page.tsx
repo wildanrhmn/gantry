@@ -19,7 +19,7 @@ export default async function Home() {
 
   return (
     <>
-      <Hero block={scan.toBlock} live={scan.live} cars={cars} />
+      <Hero cars={cars} />
       <ScanBand stats={scan} cars={cars} />
 
       <main className="page">

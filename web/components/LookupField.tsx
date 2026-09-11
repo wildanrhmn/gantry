@@ -13,12 +13,10 @@ const EXAMPLES = [
 export function LookupField({
   initial = "",
   big = true,
-  centred = false,
   trailing,
 }: {
   initial?: string;
   big?: boolean;
-  centred?: boolean;
   trailing?: React.ReactNode;
 }) {
   const router = useRouter();
@@ -36,7 +34,7 @@ export function LookupField({
   }
 
   return (
-    <div data-centred={centred || undefined}>
+    <div>
       <form className={styles.field} onSubmit={(e) => { e.preventDefault(); go(value); }}>
         <input
           className={big ? styles.inputBig : styles.input}
@@ -53,7 +51,7 @@ export function LookupField({
 
       {error ? <p className={styles.error}>{error}</p> : null}
 
-      {big || centred ? (
+      {big ? (
         <p className={styles.hint}>
           Try{" "}
           {EXAMPLES.map((e, i) => (
