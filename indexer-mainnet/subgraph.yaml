@@ -1,0 +1,19 @@
+specVersion: 1.0.0
+description: >
+  Behaviour of every address trading Uniswap v4 on Ethereum mainnet, served live.
+  Powered by the gantry Substreams package: map_swaps extracts swaps, map_sandwiches
+  finds extraction, and graph_out accumulates both into entities.
+repository: https://github.com/wildanrhmn/gantry
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: substreams
+    name: gantry
+    network: mainnet
+    source:
+      package:
+        moduleName: graph_out
+        file: ./gantry.spkg
+    mapping:
+      kind: substreams/graph-entities
+      apiVersion: 0.0.9

@@ -13,6 +13,7 @@ substreams-ethereum = "0.10"
 prost = "0.13"
 prost-types = "0.13"
 hex = "0.4"
+substreams-entity-change = "2"
 
 [profile.release]
 lto = true

@@ -1,6 +1,6 @@
 {
   "schedule": "0 */15 * * * *",
-  "features_url": "https://gantry-features.vercel.app/api/features",
+  "features_url": "https://api.studio.thegraph.com/query/1760064/gantry-mainnet/version/latest",
   "secrets_ids": {
     "scoring_params_id": "gantry_scoring_params",
     "features_key_id": "gantry_features_key"

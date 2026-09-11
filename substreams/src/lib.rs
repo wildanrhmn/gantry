@@ -166,3 +166,108 @@ fn map_sandwiches(swaps: Swaps) -> Result<Sandwiches, Error> {
     found.sort_by_key(|s| (s.block_number, s.frontrun_index));
     Ok(Sandwiches { sandwiches: found })
 }
+
+// ---------------------------------------------------------------------------
+// Stores and graph_out: the same detection, accumulated across blocks and
+// emitted as entity changes so a subgraph can serve it live.
+// ---------------------------------------------------------------------------
+
+use substreams::store::{
+    DeltaInt64, Deltas, StoreAdd, StoreAddInt64, StoreGet, StoreGetInt64, StoreNew, StoreSet,
+    StoreSetIfNotExists, StoreSetIfNotExistsInt64, StoreSetInt64,
+};
+use substreams_entity_change::pb::entity::EntityChanges;
+use substreams_entity_change::tables::Tables;
+
+/// Per-address counters: how much it traded and how often it sandwiched.
+#[substreams::handlers::store]
+fn store_counts(swaps: Swaps, sandwiches: Sandwiches, store: StoreAddInt64) {
+    for swap in &swaps.swaps {
+        store.add(0, format!("swaps:{}", swap.sender.to_lowercase()), 1);
+    }
+    for s in &sandwiches.sandwiches {
+        store.add(0, format!("sandwiches:{}", s.attacker.to_lowercase()), 1);
+    }
+}
+
+/// One key per (address, originator) pair. A key appearing for the first time is a
+/// newly seen originator, which is what the next store counts.
+#[substreams::handlers::store]
+fn store_seen_originators(swaps: Swaps, store: StoreSetIfNotExistsInt64) {
+    for swap in &swaps.swaps {
+        if swap.tx_from.is_empty() {
+            continue;
+        }
+        store.set_if_not_exists(
+            0,
+            format!("{}:{}", swap.sender.to_lowercase(), swap.tx_from.to_lowercase()),
+            &1,
+        );
+    }
+}
+
+/// Distinct originators per address. Many unrelated originators means shared
+/// infrastructure, which must never be priced punitively.
+#[substreams::handlers::store]
+fn store_originators(seen: Deltas<DeltaInt64>, store: StoreAddInt64) {
+    for delta in seen.deltas {
+        if delta.old_value != 0 {
+            continue;
+        }
+        if let Some((sender, _)) = delta.key.split_once(':') {
+            store.add(0, format!("orig:{}", sender), 1);
+        }
+    }
+}
+
+/// First and last block an address was seen trading.
+#[substreams::handlers::store]
+fn store_first_block(swaps: Swaps, store: StoreSetIfNotExistsInt64) {
+    for swap in &swaps.swaps {
+        store.set_if_not_exists(0, swap.sender.to_lowercase(), &(swap.block_number as i64));
+    }
+}
+
+#[substreams::handlers::store]
+fn store_last_block(swaps: Swaps, store: StoreSetInt64) {
+    for swap in &swaps.swaps {
+        store.set(0, swap.sender.to_lowercase(), &(swap.block_number as i64));
+    }
+}
+
+#[substreams::handlers::map]
+fn graph_out(
+    swaps: Swaps,
+    counts: StoreGetInt64,
+    originators: StoreGetInt64,
+    first_block: StoreGetInt64,
+    last_block: StoreGetInt64,
+) -> Result<EntityChanges, Error> {
+    let mut tables = Tables::new();
+    let mut touched: Vec<String> = Vec::new();
+
+    for swap in &swaps.swaps {
+        let address = swap.sender.to_lowercase();
+        if touched.contains(&address) {
+            continue;
+        }
+        touched.push(address.clone());
+
+        let swaps_seen = counts.get_last(format!("swaps:{}", address)).unwrap_or(0);
+        let sandwiches = counts.get_last(format!("sandwiches:{}", address)).unwrap_or(0);
+        let distinct = originators.get_last(format!("orig:{}", address)).unwrap_or(0);
+        let first = first_block.get_last(&address).unwrap_or(swap.block_number as i64);
+        let last = last_block.get_last(&address).unwrap_or(swap.block_number as i64);
+
+        tables
+            .update_row("MainnetTrader", &address)
+            .set("address", &address)
+            .set("swaps", swaps_seen)
+            .set("sandwiches", sandwiches)
+            .set("originators", distinct)
+            .set("firstBlock", first)
+            .set("lastBlock", last);
+    }
+
+    Ok(tables.to_entity_changes())
+}
