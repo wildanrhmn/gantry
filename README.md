@@ -75,8 +75,8 @@ signed by the wrong key quietly falls back to pricing the caller.
 
 Subgraphs:
 
-- mainnet behaviour — `https://api.studio.thegraph.com/query/1760064/gantry-mainnet/v0.0.2`
-- Gantry's own events — `https://api.studio.thegraph.com/query/1760064/gantry/0.0.2`
+- mainnet behaviour - `https://api.studio.thegraph.com/query/1760064/gantry-mainnet/v0.0.2`
+- Gantry's own events - `https://api.studio.thegraph.com/query/1760064/gantry/0.0.2`
 
 The hook address ends `0080` because v4 reads a hook's permissions out of its own address.
 The salt was mined until the low 14 bits equalled 128, the `BEFORE_SWAP` bit.
@@ -85,12 +85,12 @@ The salt was mined until the low 14 bits equalled 128, the `BEFORE_SWAP` bit.
 
 | What | Where |
 | --- | --- |
-| The fee decision | [`Gantry.sol#L71-L81`](contracts/src/Gantry.sol#L71-L81) — `_beforeSwap` returns `fee \| OVERRIDE_FEE_FLAG` |
-| Hook permissions | [`Gantry.sol#L52`](contracts/src/Gantry.sol#L52) — `beforeSwap` only |
-| Router vs trader | [`Gantry.sol#L100-L118`](contracts/src/Gantry.sol#L100-L118) — `_resolvePayer`, and why an attestation exists |
-| Signable attestation | [`Gantry.sol#L86-L90`](contracts/src/Gantry.sol#L86-L90) — EIP-712 digest |
-| Fail open, never revert | [`Gantry.sol#L120-L127`](contracts/src/Gantry.sol#L120-L127) — a bad oracle cannot halt the pool |
-| Routers cannot be priced up | [`TierOracle.sol#L99-L104`](contracts/src/TierOracle.sol#L99-L104) — `_set` clamps shared addresses |
+| The fee decision | [`Gantry.sol#L71-L81`](contracts/src/Gantry.sol#L71-L81) - `_beforeSwap` returns `fee \| OVERRIDE_FEE_FLAG` |
+| Hook permissions | [`Gantry.sol#L52`](contracts/src/Gantry.sol#L52) - `beforeSwap` only |
+| Router vs trader | [`Gantry.sol#L100-L118`](contracts/src/Gantry.sol#L100-L118) - `_resolvePayer`, and why an attestation exists |
+| Signable attestation | [`Gantry.sol#L86-L90`](contracts/src/Gantry.sol#L86-L90) - EIP-712 digest |
+| Fail open, never revert | [`Gantry.sol#L120-L127`](contracts/src/Gantry.sol#L120-L127) - a bad oracle cannot halt the pool |
+| Routers cannot be priced up | [`TierOracle.sol#L99-L104`](contracts/src/TierOracle.sol#L99-L104) - `_set` clamps shared addresses |
 
 Feedback on building against the v4 stack is in [FEEDBACK.md](FEEDBACK.md).
 
@@ -122,7 +122,7 @@ deadline)` type in [`Gantry.sol`](contracts/src/Gantry.sol) is for.
 
 Two products, composed.
 
-**Substreams** — nine modules in `substreams/`, published to the registry at
+**Substreams** - nine modules in `substreams/`, published to the registry at
 [substreams.dev/packages/gantry](https://substreams.dev/packages/gantry/v0.1.0) so anyone can
 compose against them. `map_swaps` extracts every Uniswap v4 swap on Ethereum mainnet,
 `map_sandwiches` consumes that output and finds extraction, `map_attempts` reads transaction
@@ -130,7 +130,7 @@ traces, four stores accumulate per-address totals across blocks, and `graph_out`
 changes. `map_swaps` is deliberately generic: any v4 pipeline can reuse it without knowing
 anything about Gantry.
 
-**Subgraphs** — two, both deployed to Subgraph Studio and queried per request:
+**Subgraphs** - two, both deployed to Subgraph Studio and queried per request:
 
 - `indexer-mainnet/` indexes Uniswap v4's mainnet PoolManager and detects sandwiches from the
   order of swaps inside a block. Every number on the site comes from here.
@@ -143,7 +143,7 @@ request arrives.
 ### The part only Substreams can do
 
 A subgraph's event handlers run on receipts of successful transactions. A transaction that
-reverts emits no logs, so **no subgraph can report that it happened** — the data is not
+reverts emits no logs, so **no subgraph can report that it happened** - the data is not
 missing, it is structurally absent. `map_attempts` reads `transaction_traces`, which carries
 the status, and finds the failures.
 

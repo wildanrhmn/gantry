@@ -31,7 +31,7 @@ all of it.
 
 Every hook tutorial and most blog posts start with `import {BaseHook} from
 "v4-periphery/src/base/hooks/BaseHook.sol"`. That path does not exist in current
-v4-periphery — there is no `BaseHook.sol` anywhere in the repo.
+v4-periphery - there is no `BaseHook.sol` anywhere in the repo.
 
 The working answer is `OpenZeppelin/uniswap-hooks` (`uniswap-hooks/base/BaseHook.sol`),
 which is a fine home for it, but finding that took a search of the whole dependency tree.
@@ -99,6 +99,6 @@ Anything scripted, and any agent reading the docs, gives up before the content.
 
 A note in the hooks documentation about what a reverting hook does to a pool. A hook that
 reverts blocks every swap against that pool for everyone, permanently, until it stops
-reverting. Gantry fails open on every path for this reason — a missing or reverting oracle
-resolves to the default tier rather than bubbling up — but that design decision came from
+reverting. Gantry fails open on every path for this reason - a missing or reverting oracle
+resolves to the default tier rather than bubbling up - but that design decision came from
 reading `Hooks.sol`, not from any guidance.
