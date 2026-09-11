@@ -66,12 +66,13 @@ signed by the wrong key quietly falls back to pricing the caller.
 
 | Contract | Address |
 | --- | --- |
-| Gantry hook | [`0x42A5B912625E0b9Aba3286CEfA3BB823DDAE0080`](https://sepolia.etherscan.io/address/0x42A5B912625E0b9Aba3286CEfA3BB823DDAE0080) |
+| Gantry hook | [`0xa3D2A9ee28198496D5DF469A8FF149aD2d780080`](https://sepolia.etherscan.io/address/0xa3D2A9ee28198496D5DF469A8FF149aD2d780080) |
+| Demo pool router | [`0x867a6f9CAcC6d7341Fad9d0d5Fac193dF684C0a9`](https://sepolia.etherscan.io/address/0x867a6f9CAcC6d7341Fad9d0d5Fac193dF684C0a9) |
 | TierOracle | [`0x846d3eF24c3c6e079Bd95cFeACC08B21427C9132`](https://sepolia.etherscan.io/address/0x846d3eF24c3c6e079Bd95cFeACC08B21427C9132) |
 | TierReportReceiver | [`0x351278Ef6FF1325c69127255936e5E7d0B47A1A4`](https://sepolia.etherscan.io/address/0x351278Ef6FF1325c69127255936e5E7d0B47A1A4) |
 | PoolManager | `0xE03A1074c86CFeDd5C142C4F04F1a1536e203543` (Uniswap canonical) |
 
-Subgraph: `https://api.studio.thegraph.com/query/1760064/gantry/0.0.1`
+Subgraph: `https://api.studio.thegraph.com/query/1760064/gantry/0.0.2`
 
 The hook address ends `0080` because v4 reads a hook's permissions out of its own address.
 The salt was mined until the low 14 bits equalled 128, the `BEFORE_SWAP` bit.
@@ -89,6 +90,16 @@ block 11677137  0x82fdc5c7...  tier 0  fee 0.05%
 
 The last two are the same address. Between them a signed report moved it from the default
 tier to clean, and the next identical swap cost six times less.
+
+### Swapping against it
+
+The pool's tokens mint freely, so anyone can try it: connect on Sepolia, mint gUSD, approve
+the router, swap. The hook charges whatever tier the caller sits on.
+
+Because a shared router is what calls the PoolManager, the hook sees the router rather than
+the trader. A trader can sign an EIP-712 attestation and pass it as hook data to be priced
+as themselves instead. That is what the `Attestation(address trader,bytes32 poolId,uint256
+deadline)` type in [`Gantry.sol`](contracts/src/Gantry.sol) is for.
 
 ## Setup
 

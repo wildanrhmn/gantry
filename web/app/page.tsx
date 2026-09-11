@@ -1,11 +1,12 @@
 import { Lookup } from "@/components/Lookup";
+import { Swap } from "@/components/Swap";
 import { recentTolls, venue } from "@/lib/subgraph";
 import { tier as tierOf } from "@/lib/tiers";
 import styles from "@/components/Lookup.module.css";
 
 export const revalidate = 10;
 
-const GANTRY = "0x42A5B912625E0b9Aba3286CEfA3BB823DDAE0080";
+const GANTRY = "0xa3D2A9ee28198496D5DF469A8FF149aD2d780080";
 const ORACLE = "0x846d3eF24c3c6e079Bd95cFeACC08B21427C9132";
 
 export default async function Home() {
@@ -15,6 +16,17 @@ export default async function Home() {
   return (
     <main className={styles.page}>
       <Lookup />
+
+      <section className={styles.section}>
+        <p className="eyebrow">Swap</p>
+        <h2 className={`display ${styles.h3}`}>Pay your own toll</h2>
+        <p className={styles.lede}>
+          A pool on Sepolia with the hook attached. Swapping through a shared router means the
+          hook sees the router, not you — so sign an attestation and it prices your address
+          instead.
+        </p>
+        <Swap />
+      </section>
 
       <section className={styles.section}>
         <p className="eyebrow">Live feed</p>

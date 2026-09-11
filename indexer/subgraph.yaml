@@ -26,6 +26,29 @@ dataSources:
         - event: Tolled(indexed address,uint8,uint24)
           handler: handleTolled
   - kind: ethereum
+    name: GantryV2
+    network: sepolia
+    source:
+      abi: Gantry
+      address: "0xa3D2A9ee28198496D5DF469A8FF149aD2d780080"
+      startBlock: 11677900
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/gantry.ts
+      entities:
+        - Trader
+        - Toll
+        - Venue
+      abis:
+        - name: Gantry
+          file: ./abis/Gantry.json
+      eventHandlers:
+        - event: Tolled(indexed address,uint8,uint24)
+          handler: handleTolled
+
+  - kind: ethereum
     name: TierOracle
     network: sepolia
     source:

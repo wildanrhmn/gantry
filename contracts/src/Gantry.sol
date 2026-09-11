@@ -11,11 +11,12 @@ import {LPFeeLibrary} from "@uniswap/v4-core/src/libraries/LPFeeLibrary.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {PoolId, PoolIdLibrary} from "@uniswap/v4-core/src/types/PoolId.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ITierOracle} from "./interfaces/ITierOracle.sol";
 
 /// @notice Prices each swap by the caller's behaviour tier. Nobody is ever blocked;
 /// toxic flow simply pays more, and the surplus stays with the pool's LPs.
-contract Gantry is BaseHook {
+contract Gantry is BaseHook, EIP712 {
     using PoolIdLibrary for PoolKey;
 
     uint256 private constant TIER_COUNT = 4;
@@ -33,7 +34,14 @@ contract Gantry is BaseHook {
 
     error FeeTooHigh();
 
-    constructor(IPoolManager poolManager_, ITierOracle oracle_, uint24[4] memory fees) BaseHook(poolManager_) {
+    /// @dev Attestation(address trader,bytes32 poolId,uint256 deadline)
+    bytes32 private constant ATTESTATION_TYPEHASH =
+        keccak256("Attestation(address trader,bytes32 poolId,uint256 deadline)");
+
+    constructor(IPoolManager poolManager_, ITierOracle oracle_, uint24[4] memory fees)
+        BaseHook(poolManager_)
+        EIP712("Gantry", "1")
+    {
         oracle = oracle_;
         for (uint256 i; i < TIER_COUNT; ++i) {
             if (fees[i] > MAX_FEE) revert FeeTooHigh();
@@ -73,9 +81,12 @@ contract Gantry is BaseHook {
     }
 
     /// @notice Digest a trader signs to be priced on their own history rather than their router's.
-    /// Bound to this hook, this chain and this pool so a signature cannot be replayed elsewhere.
+    /// EIP-712 so a wallet can show what is being signed, and bound to this hook, this chain
+    /// and this pool so a signature cannot be replayed elsewhere.
     function attestationDigest(address trader, PoolKey calldata key, uint256 deadline) public view returns (bytes32) {
-        return keccak256(abi.encode(block.chainid, address(this), PoolId.unwrap(key.toId()), trader, deadline));
+        return _hashTypedDataV4(
+            keccak256(abi.encode(ATTESTATION_TYPEHASH, trader, PoolId.unwrap(key.toId()), deadline))
+        );
     }
 
     /// @dev Exposed only so the decode below can be attempted inside a try/catch.
