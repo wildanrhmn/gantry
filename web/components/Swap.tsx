@@ -42,7 +42,7 @@ interface Receipt {
 }
 
 export function Swap() {
-  const { account, connecting, connect, client: wallet } = useWallet();
+  const { account, connecting, connect, wrongChain, switchChain, client: wallet } = useWallet();
   const [balance, setBalance] = useState<bigint | null>(null);
   const [allowance, setAllowance] = useState<bigint | null>(null);
   const [amount, setAmount] = useState("1000");
@@ -272,11 +272,13 @@ export function Swap() {
   /** The button is the state machine: it says the next thing that has to happen. */
   const step = !account
     ? { label: connecting ? "Connecting" : "Connect wallet", run: connect, ready: true }
-    : needsTokens
-      ? { label: busy === "mint" ? "Minting" : `Mint 1,000 ${SELL_SYMBOL}`, run: getTokens, ready: true }
-      : needsApproval
-        ? { label: busy === "approve" ? "Approving" : `Approve ${SELL_SYMBOL}`, run: approve, ready: true }
-        : { label: busy === "swap" ? "Swapping" : `Swap ${SELL_SYMBOL}`, run: swap, ready: size > 0 };
+    : wrongChain
+      ? { label: `Switch to ${CHAIN.name}`, run: switchChain, ready: true }
+      : needsTokens
+        ? { label: busy === "mint" ? "Minting" : `Mint 1,000 ${SELL_SYMBOL}`, run: getTokens, ready: true }
+        : needsApproval
+          ? { label: busy === "approve" ? "Approving" : `Approve ${SELL_SYMBOL}`, run: approve, ready: true }
+          : { label: busy === "swap" ? "Swapping" : `Swap ${SELL_SYMBOL}`, run: swap, ready: size > 0 };
 
   return (
     <div className={styles.stage}>

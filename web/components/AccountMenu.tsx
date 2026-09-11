@@ -52,7 +52,7 @@ const Power = () => (
 );
 
 export function AccountMenu({ className }: { className?: string }) {
-  const { account, connecting, connect, disconnect, error } = useWallet();
+  const { account, connecting, connect, disconnect, wrongChain, switchChain, error } = useWallet();
   const [open, setOpen] = useState(false);
   const [tier, setTier] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
@@ -120,8 +120,8 @@ export function AccountMenu({ className }: { className?: string }) {
           <span className={styles.who}>
             <span className={styles.addr}>{shorten(account)}</span>
             <span className={styles.net}>
-              <span className={styles.netDot} />
-              {CHAIN.name}
+              <span className={styles.netDot} data-wrong={wrongChain || undefined} />
+              {wrongChain ? "wrong network" : CHAIN.name}
             </span>
           </span>
           <button
@@ -150,6 +150,12 @@ export function AccountMenu({ className }: { className?: string }) {
         </div>
 
         <div className={styles.actions}>
+          {wrongChain ? (
+            <button className={styles.action} onClick={() => void switchChain()}>
+              <Out />
+              Switch to {CHAIN.name}
+            </button>
+          ) : null}
           <a
             className={styles.action}
             href={`${CHAIN.blockExplorers?.default.url}/address/${account}`}
@@ -163,7 +169,7 @@ export function AccountMenu({ className }: { className?: string }) {
             className={styles.action}
             data-danger="true"
             onClick={() => {
-              disconnect();
+              void disconnect();
               setOpen(false);
             }}
           >

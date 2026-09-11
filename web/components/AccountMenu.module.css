@@ -114,6 +114,10 @@
   background: var(--success);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 22%, transparent);
 }
+.netDot[data-wrong] {
+  background: var(--warning);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--warning) 22%, transparent);
+}
 
 .copy {
   position: relative;
