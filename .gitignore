@@ -24,3 +24,6 @@ IDEAS.md
 DEPLOYED.md
 cre/**/.cre_build_tmp.js
 design/
+web/.next/
+web/node_modules/
+web/out/

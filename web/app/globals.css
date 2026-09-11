@@ -1,0 +1,91 @@
+:root {
+  --brand: #9ea2fd;
+  --brand-light: #c7c9ff;
+  --brand-medium: #7b80ee;
+  --brand-strong: #656bd7;
+  --brand-soft: #526dff40;
+  --brand-softer: #526dff24;
+
+  --page: #01010d;
+  --card: #050516;
+  --card-soft: #080819;
+  --control-fill: #080819;
+  --hover-fill: #0c0c21;
+  --border: #1c1c3bcc;
+  --border-subtle: #1c1c3b80;
+
+  --success: #5cffcb;
+  --success-strong: #38dfa8;
+  --success-soft: #5cffcb14;
+  --danger: #ff2e58;
+  --danger-strong: #e41d47;
+  --danger-soft: #ff2e5814;
+  --warning: #ffaf62;
+  --warning-soft: #ffaf6214;
+
+  --fg: #e8e8ff;
+  --fg-muted: #8a8aae;
+  --fg-dim: #5a5a7a;
+
+  --font-display: "Archivo";
+  --font-body: "Instrument Sans";
+  --font-mono: "IBM Plex Mono";
+
+  --r-md: 0px;
+  --r-full: 9999px;
+
+  --s1: 4px;  --s2: 8px;   --s3: 12px;  --s4: 16px;  --s5: 20px;
+  --s6: 24px; --s8: 32px;  --s10: 40px; --s12: 48px; --s16: 64px;
+  --s20: 80px; --s24: 96px; --s32: 128px;
+}
+
+* { box-sizing: border-box; }
+
+html, body { padding: 0; margin: 0; }
+
+body {
+  background: var(--page);
+  color: var(--fg);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--brand-soft); }
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.display {
+  font-family: var(--font-display), sans-serif;
+  font-variation-settings: "wdth" 118;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.02;
+  margin: 0;
+}
+
+.mono { font-family: var(--font-mono), monospace; }
+
+.eyebrow {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-dim);
+  margin: 0;
+}
+
+.muted { color: var(--fg-muted); }
+.dim { color: var(--fg-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

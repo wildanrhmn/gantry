@@ -1,0 +1,126 @@
+.page { max-width: 1120px; margin: 0 auto; padding: var(--s16) var(--s6) var(--s32); }
+
+.hero { min-height: 62vh; display: flex; flex-direction: column; justify-content: center; }
+
+.mark { display: flex; align-items: baseline; gap: var(--s3); margin-bottom: var(--s10); }
+.wordmark {
+  font-family: var(--font-display), sans-serif;
+  font-variation-settings: "wdth" 122;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+.tagline { font-family: var(--font-mono), monospace; font-size: 12px; color: var(--fg-dim); }
+
+.field { display: flex; gap: var(--s3); flex-wrap: wrap; }
+
+.input {
+  flex: 1;
+  min-width: 280px;
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(15px, 2.2vw, 20px);
+  color: var(--fg);
+  background: var(--control-fill);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s5) var(--s5);
+}
+.input::placeholder { color: var(--fg-dim); }
+
+.go {
+  font-family: var(--font-body), sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+  background: var(--control-fill);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0 var(--s8);
+  cursor: pointer;
+  transition: background 80ms ease;
+}
+.go:hover { background: var(--hover-fill); }
+.go:disabled { color: var(--fg-dim); cursor: not-allowed; }
+
+.hint { margin: var(--s4) 0 0; font-size: 14px; color: var(--fg-dim); }
+.hint button {
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  color: var(--brand);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.error { margin: var(--s4) 0 0; font-size: 14px; color: var(--danger); }
+
+.result { margin-top: var(--s12); }
+.resultHead { display: flex; justify-content: space-between; gap: var(--s4); flex-wrap: wrap; margin-bottom: var(--s4); }
+.address { font-family: var(--font-mono), monospace; font-size: 14px; color: var(--fg-muted); word-break: break-all; }
+
+.notice {
+  margin-top: var(--s4);
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--brand);
+  background: var(--brand-softer);
+  padding: var(--s4) var(--s5);
+  font-size: 14px;
+  color: var(--fg-muted);
+}
+
+.section { margin-top: var(--s24); border-top: 1px solid var(--border); padding-top: var(--s8); }
+.h3 { font-size: clamp(26px, 4vw, 36px); font-weight: 700; }
+.lede { color: var(--fg-muted); max-width: 62ch; margin: var(--s3) 0 0; }
+
+.table { width: 100%; border-collapse: collapse; margin-top: var(--s6); }
+.table th {
+  text-align: left;
+  font-family: var(--font-body), sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fg-dim);
+  font-weight: 600;
+  padding: 0 0 var(--s3);
+  border-bottom: 1px solid var(--border);
+}
+.table td {
+  font-family: var(--font-mono), monospace;
+  font-size: 14px;
+  color: var(--fg-muted);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.table td:last-child { text-align: right; color: var(--fg); white-space: nowrap; }
+.note { display: block; font-size: 12px; color: var(--fg-dim); margin-top: 2px; }
+
+.feedRow { display: grid; grid-template-columns: 1fr auto auto; gap: var(--s4); align-items: baseline; }
+.badge {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px var(--s2);
+  border: 1px solid currentColor;
+}
+.t0 { color: var(--success); }
+.t1 { color: var(--fg-muted); }
+.t2 { color: var(--warning); }
+.t3 { color: var(--danger); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--s3); margin-top: var(--s6); }
+.stat { border: 1px solid var(--border); background: var(--card); padding: var(--s5); }
+.statValue { font-family: var(--font-mono), monospace; font-size: 28px; margin: var(--s2) 0 0; }
+
+.foot { margin-top: var(--s24); border-top: 1px solid var(--border); padding-top: var(--s6); font-size: 13px; color: var(--fg-dim); }
+.foot a { color: var(--brand); text-decoration: none; }
+.foot a:hover { text-decoration: underline; }
+
+@media (max-width: 560px) {
+  .page { padding: var(--s10) var(--s4) var(--s24); }
+  .hero { min-height: auto; }
+  .feedRow { grid-template-columns: 1fr auto; }
+}
