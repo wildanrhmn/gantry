@@ -27,11 +27,21 @@ async function ask<T>(path: string): Promise<T | null> {
   }
 }
 
-export async function revertedFor(address: string): Promise<number> {
+/** The count, and which source answered, so provenance is never guesswork. */
+export async function reverted(address: string): Promise<{ reverted: number; live: boolean }> {
   const key = address.toLowerCase();
   const hit = await ask<{ reverted: number }>(`/attempts?address=${key}`);
-  return typeof hit?.reverted === "number" ? hit.reverted : (frozen.get(key) ?? 0);
+  return typeof hit?.reverted === "number"
+    ? { reverted: hit.reverted, live: true }
+    : { reverted: frozen.get(key) ?? 0, live: false };
 }
+
+export async function revertedFor(address: string): Promise<number> {
+  return (await reverted(address)).reverted;
+}
+
+/** Whether the sink is configured at all, which is the first thing to check when it is not. */
+export const sinkConfigured = () => Boolean(API);
 
 export interface RevertedTotals {
   total: number;

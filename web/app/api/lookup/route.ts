@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revertedFor } from "@/lib/attempts";
+import { reverted, sinkConfigured } from "@/lib/attempts";
 import { scanWindow } from "@/lib/lookup";
 import { mainnetTrader } from "@/lib/mainnet";
 import { traderInPool } from "@/lib/subgraph";
@@ -30,7 +30,13 @@ export async function GET(request: Request) {
   }
 
   if (part === "attempts") {
-    return NextResponse.json({ reverted: await revertedFor(address) });
+    const hit = await reverted(address);
+    // "sink" means it came off the live Substreams stream, "snapshot" the committed file.
+    return NextResponse.json({
+      reverted: hit.reverted,
+      source: hit.live ? "sink" : "snapshot",
+      sinkConfigured: sinkConfigured(),
+    });
   }
 
   if (part === "pool") {
