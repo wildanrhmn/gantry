@@ -36,6 +36,14 @@ modules:
     output:
       type: proto:gantry.v1.Sandwiches
 
+  - name: map_attempts
+    kind: map
+    initialBlock: 25900000
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:gantry.v1.Attempts
+
   - name: store_counts
     kind: store
     initialBlock: 25900000
@@ -44,6 +52,7 @@ modules:
     inputs:
       - map: map_swaps
       - map: map_sandwiches
+      - map: map_attempts
 
   - name: store_seen_originators
     kind: store

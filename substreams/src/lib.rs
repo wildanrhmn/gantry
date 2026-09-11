@@ -1,6 +1,6 @@
 mod pb;
 
-use pb::gantry::v1::{Sandwich, Sandwiches, Swap, Swaps};
+use pb::gantry::v1::{Attempt, Attempts, Sandwich, Sandwiches, Swap, Swaps};
 use std::collections::HashMap;
 use std::str::FromStr;
 use substreams::errors::Error;
@@ -11,6 +11,12 @@ use substreams_ethereum::pb::eth::v2 as eth;
 const SWAP_TOPIC: [u8; 32] = [
     0x40, 0xe9, 0xce, 0xcb, 0x9f, 0x5f, 0x1f, 0x1c, 0x5b, 0x9c, 0x97, 0xde, 0xc2, 0x91, 0x7b, 0x7e,
     0xe9, 0x2e, 0x57, 0xba, 0x55, 0x63, 0x70, 0x8d, 0xac, 0xa9, 0x4d, 0xd8, 0x4a, 0xd7, 0x11, 0x2f,
+];
+
+/// Uniswap v4 PoolManager on Ethereum mainnet.
+const POOL_MANAGER: [u8; 20] = [
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x44, 0x4c, 0x5d, 0xc7, 0x5c, 0xB3, 0x58, 0x38, 0x0D, 0x2e,
+    0x3d, 0xE0, 0x8A, 0x90,
 ];
 
 /// How closely a backrun must reverse its own frontrun, as a percentage.
@@ -58,6 +64,45 @@ fn map_swaps(block: eth::Block) -> Result<Swaps, Error> {
 
     swaps.sort_by_key(|s| s.log_index);
     Ok(Swaps { swaps })
+}
+
+/// Transactions that called the PoolManager and did not succeed.
+///
+/// A reverted transaction emits no logs, so a subgraph cannot see one: its event
+/// handlers only ever run on receipts of successful transactions. Substreams carries the
+/// whole trace, failures included. Losing a race is still a behaviour, and a bot that
+/// keeps losing them is still a bot.
+#[substreams::handlers::map]
+fn map_attempts(block: eth::Block) -> Result<Attempts, Error> {
+    let mut attempts = Vec::new();
+
+    for trx in &block.transaction_traces {
+        // 1 is Succeeded; anything else is a failure or a revert.
+        if trx.status == 1 {
+            continue;
+        }
+        let touched = trx
+            .calls
+            .iter()
+            .any(|call| call.address.as_slice() == POOL_MANAGER);
+        if !touched {
+            continue;
+        }
+
+        attempts.push(Attempt {
+            block_number: block.number,
+            contract: format!("0x{}", hex::encode(&trx.to)),
+            originator: format!("0x{}", hex::encode(&trx.from)),
+            tx_hash: format!("0x{}", hex::encode(&trx.hash)),
+            status: match trx.status {
+                2 => "failed".to_string(),
+                3 => "reverted".to_string(),
+                _ => "unknown".to_string(),
+            },
+        });
+    }
+
+    Ok(Attempts { attempts })
 }
 
 /// True when the two legs are within tolerance of each other.
@@ -181,12 +226,15 @@ use substreams_entity_change::tables::Tables;
 
 /// Per-address counters: how much it traded and how often it sandwiched.
 #[substreams::handlers::store]
-fn store_counts(swaps: Swaps, sandwiches: Sandwiches, store: StoreAddInt64) {
+fn store_counts(swaps: Swaps, sandwiches: Sandwiches, attempts: Attempts, store: StoreAddInt64) {
     for swap in &swaps.swaps {
         store.add(0, format!("swaps:{}", swap.sender.to_lowercase()), 1);
     }
     for s in &sandwiches.sandwiches {
         store.add(0, format!("sandwiches:{}", s.attacker.to_lowercase()), 1);
+    }
+    for a in &attempts.attempts {
+        store.add(0, format!("failed:{}", a.contract.to_lowercase()), 1);
     }
 }
 
@@ -256,6 +304,7 @@ fn graph_out(
         let swaps_seen = counts.get_last(format!("swaps:{}", address)).unwrap_or(0);
         let sandwiches = counts.get_last(format!("sandwiches:{}", address)).unwrap_or(0);
         let distinct = originators.get_last(format!("orig:{}", address)).unwrap_or(0);
+        let failed = counts.get_last(format!("failed:{}", address)).unwrap_or(0);
         let first = first_block.get_last(&address).unwrap_or(swap.block_number as i64);
         let last = last_block.get_last(&address).unwrap_or(swap.block_number as i64);
 
@@ -264,6 +313,7 @@ fn graph_out(
             .set("address", &address)
             .set("swaps", swaps_seen)
             .set("sandwiches", sandwiches)
+            .set("failedAttempts", failed)
             .set("originators", distinct)
             .set("firstBlock", first)
             .set("lastBlock", last);

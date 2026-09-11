@@ -19,6 +19,20 @@ message Swap {
   string tx_from = 9;
 }
 
+// A transaction that called the PoolManager and reverted. No log is emitted on chain
+// for these, so nothing that reads events can see them.
+message Attempts {
+  repeated Attempt attempts = 1;
+}
+
+message Attempt {
+  uint64 block_number = 1;
+  string contract = 2;
+  string originator = 3;
+  string tx_hash = 4;
+  string status = 5;
+}
+
 // One address opening and closing a position around somebody else's trade.
 message Sandwiches {
   repeated Sandwich sandwiches = 1;

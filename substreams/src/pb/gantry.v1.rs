@@ -29,6 +29,28 @@ pub struct Swap {
     #[prost(string, tag="9")]
     pub tx_from: ::prost::alloc::string::String,
 }
+/// A transaction that called the PoolManager and reverted. No log is emitted on chain
+/// for these, so nothing that reads events can see them.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Attempts {
+    #[prost(message, repeated, tag="1")]
+    pub attempts: ::prost::alloc::vec::Vec<Attempt>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Attempt {
+    #[prost(uint64, tag="1")]
+    pub block_number: u64,
+    #[prost(string, tag="2")]
+    pub contract: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub originator: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub tx_hash: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub status: ::prost::alloc::string::String,
+}
 /// One address opening and closing a position around somebody else's trade.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

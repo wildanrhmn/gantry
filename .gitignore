@@ -29,3 +29,4 @@ web/node_modules/
 web/out/
 indexer-mainnet/build/
 indexer-mainnet/node_modules/
+indexer-mainnet/generated/
