@@ -28,8 +28,9 @@ does not escape the toll.
 - `contracts/src/Gantry.sol` - the hook. Fee selection lives in `_beforeSwap`.
 - `contracts/src/TierOracle.sol` - behaviour tiers, batch written, single read on the swap path.
 - `scorer/` - reads `Swap` logs straight from an RPC, finds sandwiches, assigns tiers.
-- `substreams/` - `map_swaps` extracts v4 swaps, `map_sandwiches` consumes it.
+- `substreams/` - `map_swaps` extracts v4 swaps, `map_sandwiches` and `map_attempts` consume it.
 - `indexer/` - subgraph over `Tolled` and `TierSet`, building per-address history.
+- `indexer-mainnet/` - subgraph over Uniswap v4's mainnet PoolManager, which every page reads live.
 - `mcp/` - ask an MCP client why an address pays what it pays.
 - `scripts/demo.sh` - the whole loop on a local chain.
 
@@ -72,7 +73,10 @@ signed by the wrong key quietly falls back to pricing the caller.
 | TierReportReceiver | [`0x351278Ef6FF1325c69127255936e5E7d0B47A1A4`](https://sepolia.etherscan.io/address/0x351278Ef6FF1325c69127255936e5E7d0B47A1A4) |
 | PoolManager | `0xE03A1074c86CFeDd5C142C4F04F1a1536e203543` (Uniswap canonical) |
 
-Subgraph: `https://api.studio.thegraph.com/query/1760064/gantry/0.0.2`
+Subgraphs:
+
+- mainnet behaviour — `https://api.studio.thegraph.com/query/1760064/gantry-mainnet/v0.0.2`
+- Gantry's own events — `https://api.studio.thegraph.com/query/1760064/gantry/0.0.2`
 
 The hook address ends `0080` because v4 reads a hook's permissions out of its own address.
 The salt was mined until the low 14 bits equalled 128, the `BEFORE_SWAP` bit.
@@ -118,42 +122,56 @@ deadline)` type in [`Gantry.sol`](contracts/src/Gantry.sol) is for.
 
 Two products, composed.
 
-**Substreams** — eight modules in `substreams/`. `map_swaps` extracts every Uniswap v4 swap
-on Ethereum mainnet, `map_sandwiches` consumes that output and finds extraction, four
-stores accumulate per-address totals across blocks, and `graph_out` emits entity changes.
-Streamed live from The Graph Market.
+**Substreams** — nine modules in `substreams/`, published to the registry at
+[substreams.dev/packages/gantry](https://substreams.dev/packages/gantry/v0.1.0) so anyone can
+compose against them. `map_swaps` extracts every Uniswap v4 swap on Ethereum mainnet,
+`map_sandwiches` consumes that output and finds extraction, `map_attempts` reads transaction
+traces, four stores accumulate per-address totals across blocks, and `graph_out` emits entity
+changes. `map_swaps` is deliberately generic: any v4 pipeline can reuse it without knowing
+anything about Gantry.
 
-`map_swaps` is deliberately generic: any v4 pipeline can reuse it without knowing anything
-about Gantry.
+**Subgraphs** — two, both deployed to Subgraph Studio and queried per request:
 
-**Subgraph** — `indexer/`, deployed to Subgraph Studio and queried live on every page that
-shows a toll, a tier change or a venue total.
+- `indexer-mainnet/` indexes Uniswap v4's mainnet PoolManager and detects sandwiches from the
+  order of swaps inside a block. Every number on the site comes from here.
+- `indexer/` indexes Gantry's own `Tolled` and `TierSet` events on Sepolia.
 
-### Why Substreams rather than eth_getLogs
+Nothing on the site is read from a checked-in dataset. The address readout, the leaderboard,
+the venue totals and the features the CRE enclave scores are all GraphQL queries made when the
+request arrives.
 
-`eth_getLogs` returns a log but not who sent the transaction, and without the originator a
-shared router is indistinguishable from a bot. Measured over blocks 25,900,000–25,940,000:
-Uniswap's Universal Router shows **113,764 swaps from 17,117 distinct originators**, a
-dedicated sandwich bot shows one. Substreams carries the originator from receipt context,
-which is the only reason the two can be told apart.
+### The part only Substreams can do
 
-### Where the mainnet numbers come from
+A subgraph's event handlers run on receipts of successful transactions. A transaction that
+reverts emits no logs, so **no subgraph can report that it happened** — the data is not
+missing, it is structurally absent. `map_attempts` reads `transaction_traces`, which carries
+the status, and finds the failures.
 
-`web/data/mainnet-features.json` is a materialised view of that pipeline, not a hand-made
-fixture. Regenerate it in two commands:
+Over blocks 25,940,000–25,945,000 that is **2,827 transactions that reached the v4 PoolManager
+and reverted**, across 132 addresses. One address reverted 1,146 times in 5,000 blocks. Losing
+that many races is what a bot looks like when it does not win, and it moves an address to the
+suspected tier in [`score.ts`](scorer/src/score.ts).
+
+The originator is the other reason. Without knowing who sent the transaction, a shared router
+is indistinguishable from a bot: Uniswap's Universal Router shows **113,764 swaps from 17,117
+distinct originators** over blocks 25,900,000–25,940,000, a dedicated sandwich bot shows one.
+Both pipelines carry it, and it is why the router is never priced up.
+
+### Regenerating the trace data
 
 ```bash
-cd substreams && substreams run substreams.yaml map_swaps \
-  -e mainnet.eth.streamingfast.io:443 --start-block 25940000 --stop-block +5000 \
-  -o json > scan.json
-cd ../scorer && node src/build-dataset.ts scan.json ../web/data/mainnet-features.json
+cd substreams
+substreams run gantry-v0.1.0.spkg map_attempts -e mainnet.eth.streamingfast.io:443 \
+  -s 25940000 -t 25945000 -o jsonl > attempts.jsonl
 ```
 
-It is served over HTTP at `/api/features`, which is what the CRE workflow reads.
+Aggregated per address into `web/data/failed-attempts.json` and merged into `/api/features`,
+which is what the CRE workflow reads.
 
 Note for anyone trying this: **Substreams-powered subgraphs are no longer supported by
 Subgraph Studio** ("originally intended for non-EVM chains"), so `graph_out` is consumed
-through a sink or the registry rather than by a subgraph.
+through a sink or the registry rather than by a subgraph. That is why `indexer-mainnet` is an
+ordinary event-based subgraph.
 
 ## Setup
 
