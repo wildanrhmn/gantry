@@ -51,6 +51,7 @@ export function Swap() {
   const [error, setError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [tier, setTier] = useState<number | null>(null);
+  const [quote, setQuote] = useState<number | null>(null);
 
   const refresh = useCallback(async (who: Address) => {
     const [bal, allow] = await Promise.all([
@@ -193,6 +194,52 @@ export function Swap() {
       await refresh(account);
     });
 
+  const has = (v: bigint | null) => v !== null && v > BigInt(0);
+
+  /** v4 packs both sides of a trade into one int256: amount0 high, amount1 low. */
+  const unpack = (delta: bigint) => {
+    const mask = (BigInt(1) << BigInt(128)) - BigInt(1);
+    const signed = (v: bigint) => (v >= BigInt(1) << BigInt(127) ? v - (BigInt(1) << BigInt(128)) : v);
+    return { amount0: signed((delta >> BigInt(128)) & mask), amount1: signed(delta & mask) };
+  };
+
+  // Ask the pool what this trade actually returns. A fee-only estimate ignores the
+  // price the trade itself moves, which on a swap this size is the larger number.
+  useEffect(() => {
+    const size = Number(amount);
+    if (!account || !size || !has(allowance)) return setQuote(null);
+    let live = true;
+    const timer = setTimeout(() => {
+      publicClient
+        .simulateContract({
+          account,
+          address: ADDRESSES.router,
+          abi: routerAbi,
+          functionName: "swap",
+          args: [
+            POOL_KEY,
+            {
+              zeroForOne: SELL_IS_TOKEN0,
+              amountSpecified: -parseUnits(amount, 18),
+              sqrtPriceLimitX96: SELL_IS_TOKEN0 ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT,
+            },
+            { takeClaims: false, settleUsingBurn: false },
+            attestation ?? "0x",
+          ],
+        })
+        .then(({ result }) => {
+          const d = unpack(result as bigint);
+          const received = SELL_IS_TOKEN0 ? d.amount1 : d.amount0;
+          if (live) setQuote(Number(formatUnits(received, 18)));
+        })
+        .catch(() => live && setQuote(null));
+    }, 350);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [account, amount, attestation, allowance]);
+
   // Without an attestation the hook prices the router, which is nobody's history.
   const FEE_BPS = [5, 30, 60, 100];
   const own = tier ?? 1;
@@ -218,7 +265,6 @@ export function Swap() {
     "rgba(226, 98, 76, 0.3)",
   ];
 
-  const has = (v: bigint | null) => v !== null && v > BigInt(0);
   const enough = balance !== null && size > 0 && balance >= parseUnits(amount || "0", 18);
   const needsTokens = Boolean(account) && !enough;
   const needsApproval = Boolean(account) && enough && !has(allowance);
@@ -270,9 +316,12 @@ export function Swap() {
         <div className={styles.leg}>
           <div className={styles.legTop}>
             <span className={styles.legLabel}>You receive, before gas</span>
+            {quote === null ? <span className={styles.legBal}>estimate</span> : null}
           </div>
           <div className={styles.legRow}>
-            <span className={styles.out}>{out(FEE_BPS[pricedAs]).toFixed(4)}</span>
+            <span className={styles.out}>
+              {quote !== null ? quote.toFixed(4) : out(FEE_BPS[pricedAs]).toFixed(4)}
+            </span>
             <span className={styles.token}>
               <img className={styles.coin} src="/tokens/eth.svg" alt="" width={22} height={22} />
               {BUY_SYMBOL}
@@ -307,7 +356,7 @@ export function Swap() {
               <span>
                 {attestation
                   ? `Against the ${(FEE_BPS[1] / 100).toFixed(2)}% everyone else pays`
-                  : `At your own tier (${tierOf(own).name}) you would get ${out(FEE_BPS[own]).toFixed(4)}`}
+                  : `At your own tier (${tierOf(own).name}) you would keep more`}
               </span>
               <span className={styles.delta} data-sign={delta < 0 ? "worse" : undefined}>
                 {delta === 0 ? "no difference" : `${delta > 0 ? "+" : ""}${delta.toFixed(2)} ${BUY_SYMBOL}`}
