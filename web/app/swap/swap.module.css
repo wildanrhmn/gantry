@@ -32,8 +32,5 @@
   line-height: 1.02;
   color: var(--bone);
 }
-.body { margin: var(--s5) auto 0; max-width: 50ch; font-size: 15px; line-height: 1.6; color: var(--fg-muted); }
+.body { margin: var(--s5) auto 0; max-width: 46ch; text-wrap: balance; font-size: 15px; line-height: 1.6; color: var(--fg-muted); }
 .card { margin-top: var(--s8); text-align: left; }
-.foot { margin: var(--s8) 0 0; font-family: var(--font-mono), monospace; font-size: 11px; color: var(--fg-faint); }
-.foot a { color: var(--fg-dim); text-decoration: none; word-break: break-all; }
-.foot a:hover { color: var(--accent); }
