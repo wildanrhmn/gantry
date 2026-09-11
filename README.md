@@ -114,6 +114,47 @@ the trader. A trader can sign an EIP-712 attestation and pass it as hook data to
 as themselves instead. That is what the `Attestation(address trader,bytes32 poolId,uint256
 deadline)` type in [`Gantry.sol`](contracts/src/Gantry.sol) is for.
 
+## How The Graph is used
+
+Two products, composed.
+
+**Substreams** — eight modules in `substreams/`. `map_swaps` extracts every Uniswap v4 swap
+on Ethereum mainnet, `map_sandwiches` consumes that output and finds extraction, four
+stores accumulate per-address totals across blocks, and `graph_out` emits entity changes.
+Streamed live from The Graph Market.
+
+`map_swaps` is deliberately generic: any v4 pipeline can reuse it without knowing anything
+about Gantry.
+
+**Subgraph** — `indexer/`, deployed to Subgraph Studio and queried live on every page that
+shows a toll, a tier change or a venue total.
+
+### Why Substreams rather than eth_getLogs
+
+`eth_getLogs` returns a log but not who sent the transaction, and without the originator a
+shared router is indistinguishable from a bot. Measured over blocks 25,900,000–25,940,000:
+Uniswap's Universal Router shows **113,764 swaps from 17,117 distinct originators**, a
+dedicated sandwich bot shows one. Substreams carries the originator from receipt context,
+which is the only reason the two can be told apart.
+
+### Where the mainnet numbers come from
+
+`web/data/mainnet-features.json` is a materialised view of that pipeline, not a hand-made
+fixture. Regenerate it in two commands:
+
+```bash
+cd substreams && substreams run substreams.yaml map_swaps \
+  -e mainnet.eth.streamingfast.io:443 --start-block 25940000 --stop-block +5000 \
+  -o json > scan.json
+cd ../scorer && node src/build-dataset.ts scan.json ../web/data/mainnet-features.json
+```
+
+It is served over HTTP at `/api/features`, which is what the CRE workflow reads.
+
+Note for anyone trying this: **Substreams-powered subgraphs are no longer supported by
+Subgraph Studio** ("originally intended for non-EVM chains"), so `graph_out` is consumed
+through a sink or the registry rather than by a subgraph.
+
 ## Setup
 
 ```bash
