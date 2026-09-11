@@ -98,6 +98,7 @@ export const gantryAbi = [
 
 export const oracleAbi = [
   { type: "function", name: "tierOf", stateMutability: "view", inputs: [{ type: "address" }], outputs: [{ type: "uint8" }] },
+  { type: "function", name: "isScored", stateMutability: "view", inputs: [{ type: "address" }], outputs: [{ type: "bool" }] },
 ] as const;
 
 /** v4 derives a pool id as keccak256(abi.encode(PoolKey)). */

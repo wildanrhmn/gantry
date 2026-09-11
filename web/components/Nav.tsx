@@ -9,16 +9,10 @@ import styles from "./Nav.module.css";
 const LINKS = [
   { href: "/swap", label: "Swap" },
   { href: "/lookup", label: "Look up" },
-  { href: "/how", label: "How it works" },
+  { href: "/tolls", label: "Tolls" },
 ];
 
-const MORE = [
-  { href: "/feed", label: "Live feed" },
-  { href: "/venue", label: "Venue" },
-];
-
-const isCurrent = (href: string, path: string) =>
-  href === "/lookup" ? path.startsWith("/lookup") || path.startsWith("/address") : path.startsWith(href);
+const isCurrent = (href: string, path: string) => path.startsWith(href);
 
 export function Nav() {
   const path = usePathname();
@@ -87,7 +81,7 @@ export function Nav() {
 
         <div className={styles.drop} data-open={open}>
           <div className={styles.panel}>
-            {[...LINKS, ...MORE].map((l) => (
+            {LINKS.map((l) => (
               <Link key={l.href} href={l.href} data-active={isCurrent(l.href, path)}>{l.label}</Link>
             ))}
             <div style={{ margin: "6px 4px 2px" }}>

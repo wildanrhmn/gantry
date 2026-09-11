@@ -36,34 +36,30 @@
   color: var(--bone);
 }
 .body { margin: var(--s5) auto 0; max-width: 62ch; font-size: 16px; line-height: 1.6; color: var(--fg-muted); }
-.field { margin: var(--s8) auto 0; max-width: 560px; text-align: left; }
-
-/* where the indexer has got to, so the page is never just an empty box */
-.scan {
-  margin: var(--s12) auto 0;
-  max-width: 560px;
-  padding-top: var(--s5);
-  border-top: 1px solid var(--border-subtle);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s4);
-  text-align: left;
+.actions {
+  margin-top: var(--s8);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--s3);
 }
-.stat span {
-  display: block;
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 var(--s6);
+  border-radius: 12px;
   font-family: var(--font-mono), monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
 }
-.stat b {
-  display: block;
-  margin-top: 5px;
-  font-family: var(--font-mono), monospace;
-  font-variant-numeric: tabular-nums;
-  font-weight: 400;
-  font-size: 14px;
-  color: var(--fg-muted);
+.primary {
+  background: linear-gradient(180deg, var(--accent-hi), var(--accent));
+  color: #fff;
+  font-weight: 600;
 }
-
+.primary:hover { filter: brightness(1.08); }
+.secondary { border: 1px solid var(--edge); color: var(--fg); }
+.secondary:hover { border-color: var(--fg-dim); background: rgba(220, 220, 227, 0.03); }

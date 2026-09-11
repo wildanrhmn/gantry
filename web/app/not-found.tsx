@@ -1,16 +1,21 @@
-import { LookupField } from "@/components/LookupField";
+import Link from "next/link";
+import styles from "./not-found.module.css";
 
 export default function NotFound() {
   return (
-    <main className="page">
-      <section className="section">
-        <p className="eyebrow">Nothing here</p>
-        <h1 className="display h3">That page does not exist</h1>
-        <p className="lede">If you were looking up an address, paste it below.</p>
-        <div style={{ marginTop: "var(--s6)", maxWidth: 640 }}>
-          <LookupField big={false} />
+    <main className={styles.page}>
+      <div className={styles.inner}>
+        <span className={styles.kicker}>Nothing here</span>
+        <h1 className={styles.title}>That page does not exist</h1>
+        <p className={styles.body}>
+          Two things live on this site: a pool that prices you by your own history, and a lookup
+          that shows you what any address would pay.
+        </p>
+        <div className={styles.actions}>
+          <Link className={styles.primary} href="/swap">Swap</Link>
+          <Link className={styles.secondary} href="/lookup">Look up an address</Link>
         </div>
-      </section>
+      </div>
     </main>
   );
 }

@@ -1,14 +1,15 @@
-import { LookupField } from "@/components/LookupField";
+import { Suspense } from "react";
+import { Scanner } from "@/components/lookup/Scanner";
+import { scanWindow } from "@/lib/lookup";
 import styles from "./lookup.module.css";
 
 export const metadata = { title: "Look up an address | Gantry" };
 
-const EXAMPLES = [
-  { address: "0x76f30e3f75437fb862b8d2c4d80a671bceba5b1a", label: "a repeat sandwicher" },
-  { address: "0x66a9893cc07d91d95644aedd05d03f95e1dba8af", label: "Uniswap's router" },
-];
+export const revalidate = 30;
 
-export default function LookupPage() {
+export default async function LookupPage() {
+  const scan = await scanWindow();
+
   return (
     <main className={styles.page}>
       <div className={styles.inner}>
@@ -19,8 +20,27 @@ export default function LookupPage() {
           earns, and the fee that tier pays | with the evidence, not just the verdict.
         </p>
         <div className={styles.field}>
-          <LookupField />
+          <Suspense fallback={null}>
+            <Scanner />
+          </Suspense>
         </div>
+
+        {scan.live ? (
+          <div className={styles.scan}>
+            <p className={styles.stat}>
+              <span>Swaps observed</span>
+              <b>{scan.swaps.toLocaleString()}</b>
+            </p>
+            <p className={styles.stat}>
+              <span>Addresses seen</span>
+              <b>{scan.addresses.toLocaleString()}</b>
+            </p>
+            <p className={styles.stat}>
+              <span>Sandwiches found</span>
+              <b>{scan.sandwiches.toLocaleString()}</b>
+            </p>
+          </div>
+        ) : null}
       </div>
     </main>
   );

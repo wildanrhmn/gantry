@@ -7,7 +7,9 @@ import {
   worstOffenders as worstQuery,
   type MainnetTrader,
 } from "@/lib/mainnet";
-import { isAddress, type Lookup, type Observation, type Tier } from "@/lib/tiers";
+import { ADDRESSES, oracleAbi, publicClient } from "@/lib/chain";
+import { buildObservations } from "@/lib/observations";
+import { isAddress, type Lookup, type Tier } from "@/lib/tiers";
 
 /**
  * Transactions that reached the PoolManager and reverted, per address. This is the one
@@ -17,7 +19,8 @@ import { isAddress, type Lookup, type Observation, type Tier } from "@/lib/tiers
  */
 const failed = new Map(Object.entries(attempts.perAddress as Record<string, number>));
 
-const count = (n: number | string) => Number(n).toLocaleString("en-US");
+/** How many of this address's transactions reached the PoolManager and reverted. */
+export const revertedFor = (address: string) => failed.get(address.toLowerCase()) ?? 0;
 
 export interface ScanWindow {
   fromBlock: number;
@@ -47,47 +50,32 @@ export async function scanWindow(): Promise<ScanWindow> {
 export const worstOffenders = (limit = 8) => worstQuery(limit);
 export const sharedInfrastructure = (limit = 8) => sharedQuery(limit);
 
-function observations(row: MainnetTrader, address: string): Observation[] {
-  const reverted = failed.get(address.toLowerCase()) ?? 0;
-  return [
-    { label: "Swaps observed", value: count(row.swaps) },
-    { label: "Blocks active", value: count(row.blocks) },
-    {
-      label: "Sandwich-shaped sequences",
-      value: count(row.sandwiches),
-      note: Number(row.sandwiches) > 0 ? "opened and closed around another trade" : undefined,
-    },
-    { label: "Same-block round trips", value: count(row.roundTrips) },
-    {
-      label: "Distinct originators",
-      value: count(row.originators),
-      note: row.sharedInfrastructure ? "many unrelated people trade through this address" : "one operator",
-    },
-    {
-      label: "Reverted attempts",
-      value: count(reverted),
-      note: "from transaction traces; no subgraph can see these",
-    },
-    { label: "First seen", value: `block ${count(row.firstBlock)}` },
-    { label: "Last seen", value: `block ${count(row.lastBlock)}` },
-  ];
-}
 
 export async function lookup(address: string): Promise<Lookup | null> {
   if (!isAddress(address)) return null;
 
-  const [row, pool, source] = await Promise.all([
+  const [row, pool, source, onChain] = await Promise.all([
     mainnetTrader(address),
     traderInPool(address.toLowerCase()),
     scanWindow(),
+    // The oracle is what the hook reads at swap time, so it is the answer.
+    publicClient
+      .readContract({
+        address: ADDRESSES.oracle,
+        abi: oracleAbi,
+        functionName: "tierOf",
+        args: [address as `0x${string}`],
+      })
+      .then((t) => Number(t))
+      .catch(() => null),
   ]);
 
   return {
     address,
-    tier: (row?.tier ?? 1) as Tier,
+    tier: (onChain ?? row?.tier ?? 1) as Tier,
     scored: Boolean(row),
     sharedInfrastructure: Boolean(row?.sharedInfrastructure),
-    observations: row ? observations(row, address) : [],
+    observations: row ? buildObservations(row, revertedFor(address)) : [],
     poolSwaps: pool?.trader ? Number(pool.trader.swaps) : null,
     source,
   };
