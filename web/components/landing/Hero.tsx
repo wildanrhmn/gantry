@@ -6,15 +6,13 @@ import type { LaneCar } from "@/components/landing/ScanLane";
 import { gsap, ScrollTrigger, SplitText, reducedMotion } from "@/lib/motion";
 import styles from "./Hero.module.css";
 
-/** left, top, width, height — scattered so the backdrop reads as depth, not a pattern. */
-const BLOCKS = [
-  ["6%", "14%", "190px", "130px"],
-  ["19%", "58%", "150px", "210px"],
-  ["68%", "9%", "230px", "150px"],
-  ["83%", "52%", "170px", "190px"],
-  ["44%", "76%", "270px", "130px"],
-  ["58%", "28%", "130px", "130px"],
-  ["11%", "86%", "210px", "110px"],
+/** Bars of light: size, tilt, where they sit, and the colour they fade out of. */
+const SHAPES = [
+  { w: 600, h: 140, tilt: "12deg", pos: { left: "-6%", top: "18%" }, from: "#60495a4d", delay: "0s" },
+  { w: 500, h: 120, tilt: "-15deg", pos: { right: "-4%", top: "70%" }, from: "#a9aca924", delay: "1.1s" },
+  { w: 300, h: 80, tilt: "-8deg", pos: { left: "8%", bottom: "6%" }, from: "#bfc3ba1f", delay: "2.2s" },
+  { w: 220, h: 64, tilt: "20deg", pos: { right: "18%", top: "12%" }, from: "#3f324473", delay: "0.6s" },
+  { w: 160, h: 44, tilt: "-25deg", pos: { left: "24%", top: "8%" }, from: "#60495a38", delay: "1.7s" },
 ] as const;
 
 export function Hero({ cars }: { cars: LaneCar[] }) {
@@ -55,13 +53,25 @@ export function Hero({ cars }: { cars: LaneCar[] }) {
 
   return (
     <section className={styles.hero} ref={root}>
-      <div className={styles.blocks}>
-        {BLOCKS.map((b, i) => (
-          <span key={i} style={{ left: b[0], top: b[1], width: b[2], height: b[3] }} />
+      <div className={styles.wash} />
+      <div className={styles.shapes}>
+        {SHAPES.map((s, i) => (
+          <span
+            key={i}
+            className={styles.shape}
+            style={{
+              ...s.pos,
+              width: s.w,
+              height: s.h,
+              animationDelay: s.delay,
+              backgroundImage: `linear-gradient(90deg, ${s.from}, transparent)`,
+              ["--tilt" as string]: s.tilt,
+            }}
+          />
         ))}
       </div>
-      <div className={styles.glow} />
-      <div className={styles.vignette} />
+      <div className={styles.blueprint + " blueprint"} />
+      <div className={styles.close} />
 
       <div className={styles.inner} data-parallax>
         <h1 className={styles.title} ref={title}>

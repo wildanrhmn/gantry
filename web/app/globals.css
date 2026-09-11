@@ -1,39 +1,50 @@
 :root {
-  --brand: #9ea2fd;
-  --brand-light: #c7c9ff;
-  --brand-medium: #7b80ee;
-  --brand-strong: #656bd7;
-  --brand-soft: #526dff40;
-  --brand-softer: #526dff24;
+  /* Eclipse scale: a warm plum ground lit by ash, never black lit by white. */
+  --umbra: #2f2235;
+  --umbra-2: #271b2d;
+  --penumbra: #372a3d;
+  --grape: #3f3244;
+  --antumbra: #493c50;
+  --mauve: #60495a;
+  --corona: #bfc3ba;
 
-  --page: #01010d;
-  --card: #050516;
-  --card-soft: #080819;
-  --control-fill: #080819;
-  --hover-fill: #0c0c21;
-  --border: #1c1c3bcc;
-  --border-subtle: #1c1c3b80;
+  --brand: #8d7f99;
+  --brand-light: #bfc3ba;
+  --brand-medium: #6f5668;
+  --brand-strong: var(--mauve);
+  --brand-soft: #60495a52;
+  --brand-softer: #60495a2e;
 
-  --success: #5cffcb;
-  --success-strong: #38dfa8;
-  --success-soft: #5cffcb14;
-  --danger: #ff2e58;
-  --danger-strong: #e41d47;
-  --danger-soft: #ff2e5814;
-  --warning: #ffaf62;
-  --warning-soft: #ffaf6214;
+  --page: var(--umbra);
+  --card: var(--grape);
+  --card-soft: var(--penumbra);
+  --control-fill: var(--penumbra);
+  --hover-fill: var(--grape);
+  --border: var(--antumbra);
+  --border-subtle: var(--grape);
 
-  --asphalt: #06060e;
-  --asphalt-haze: #03030b;
-  --asphalt-line: #26263f;
-  --steel: #0d0d1a;
-  --steel-edge: #2b2b48;
-  --led: #ffc24d;
-  --led-glow: #ffb03a66;
+  /* Tiers stay distinguishable but sit in the same desaturated family as the page. */
+  --success: #9fc2a8;
+  --success-strong: #8bb094;
+  --success-soft: #9fc2a81f;
+  --danger: #cf7d8d;
+  --danger-strong: #b96a7a;
+  --danger-soft: #cf7d8d1f;
+  --warning: #cfa77c;
+  --warning-soft: #cfa77c1f;
 
-  --fg: #e8e8ff;
-  --fg-muted: #8a8aae;
-  --fg-dim: #5a5a7a;
+  --asphalt: var(--umbra-2);
+  --asphalt-haze: #221729;
+  --asphalt-line: var(--antumbra);
+  --steel: var(--penumbra);
+  --steel-edge: var(--mauve);
+  --led: #cfa77c;
+  --led-glow: #cfa77c59;
+
+  --fg: var(--corona);
+  --fg-muted: #a9aca9;
+  --fg-dim: #837e88;
+  --fg-faint: #5e5266;
 
   --font-display: "Archivo";
   --font-body: "Instrument Sans";
@@ -60,13 +71,14 @@ html { scroll-padding-top: calc(var(--nav-h) + var(--s6)); }
 body {
   background: var(--page);
   color: var(--fg);
+  font-feature-settings: "tnum" 1;
   font-family: var(--font-body), system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: var(--brand-soft); }
+::selection { background: rgba(96, 73, 90, 0.45); color: var(--corona); }
 
 :focus-visible {
   outline: 2px solid var(--brand);
@@ -113,3 +125,45 @@ body {
   :root { --nav-h: 76px; }
   .page { padding: calc(var(--nav-h) + var(--s5)) var(--s4) var(--s24); }
 }
+
+/* Light falls from one source above and dies into the umbra at the edges. */
+.field {
+  background:
+    radial-gradient(116% 84% at 50% -6%, rgba(191, 195, 186, 0.05) 0%, rgba(191, 195, 186, 0.016) 20%, transparent 52%),
+    radial-gradient(90% 70% at 50% 34%, #3a2c43 0%, #251a2c 46%, var(--umbra) 100%);
+}
+
+/* An engineering grid, faded at the frame edges so it never reads as a template. */
+.blueprint {
+  background-image:
+    linear-gradient(rgba(191, 195, 186, 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(191, 195, 186, 0.026) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(130% 100% at 50% 0%, #000 30%, transparent 82%);
+  mask-image: radial-gradient(130% 100% at 50% 0%, #000 30%, transparent 82%);
+}
+
+/* Grain, barely there, so large flat areas do not band. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+.label {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  line-height: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--grape); }
+::-webkit-scrollbar-thumb { background: var(--antumbra); }
+::-webkit-scrollbar-thumb:hover { background: var(--mauve); }
