@@ -46,7 +46,7 @@
   --s6: 24px; --s8: 32px;  --s10: 40px; --s12: 48px; --s16: 64px;
   --s20: 80px; --s24: 96px; --s32: 128px;
 
-  --nav-h: 86px;
+  --nav-h: 76px;
 }
 
 * { box-sizing: border-box; }
@@ -109,6 +109,6 @@ body {
 .section { margin-top: var(--s24); border-top: 1px solid var(--border); padding-top: var(--s8); scroll-margin-top: calc(var(--nav-h) + var(--s6)); }
 .section:first-of-type { margin-top: 0; border-top: 0; padding-top: 0; }
 @media (max-width: 720px) {
-  :root { --nav-h: 74px; }
+  :root { --nav-h: 76px; }
   .page { padding: calc(var(--nav-h) + var(--s5)) var(--s4) var(--s24); }
 }

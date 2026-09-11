@@ -13,21 +13,18 @@ const LINKS = [
   { href: "/how", label: "How it works" },
 ];
 
+const MORE = [
+  { href: "/feed", label: "Live feed" },
+  { href: "/venue", label: "Venue" },
+];
+
 const isCurrent = (href: string, path: string) =>
   href === "/" ? path.startsWith("/address") : path.startsWith(href);
 
 export function Nav() {
   const path = usePathname();
   const { account, connecting, connect } = useWallet();
-  const [lifted, setLifted] = useState(false);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setLifted(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => setOpen(false), [path]);
 
@@ -35,42 +32,57 @@ export function Nav() {
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest("nav, [data-sheet]")) setOpen(false);
+      if (!(e.target as HTMLElement).closest(`.${styles.col}`)) setOpen(false);
     };
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
   }, [open]);
 
+  const label = account ? shorten(account) : connecting ? "Connecting" : "Connect wallet";
 
   return (
     <div className={styles.wrap}>
-      <nav className={styles.bar} data-lifted={lifted}>
-        <Link href="/" className={styles.brand}>GANTRY</Link>
+      <div className={styles.col}>
+        <nav className={styles.bar}>
+          <Link href="/" className={styles.brand}>GANTRY</Link>
 
-        <div className={styles.links}>
-          {LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className={styles.link} data-active={isCurrent(l.href, path)}>
-              {l.label}
-            </Link>
-          ))}
+          <div className={styles.links}>
+            {LINKS.map((l) => (
+              <Link key={l.href} href={l.href} className={styles.link} data-active={isCurrent(l.href, path)}>
+                {l.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className={styles.right}>
+            <button className={styles.cta} onClick={connect} disabled={connecting}>
+              {account ? <span className={styles.dot} /> : null}
+              {label}
+            </button>
+
+            <button
+              className={styles.burger}
+              data-open={open}
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? "Close menu" : "Open menu"}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
+        </nav>
+
+        <div className={styles.drop} data-open={open}>
+          <div className={styles.panel}>
+            {[...LINKS, ...MORE].map((l) => (
+              <Link key={l.href} href={l.href} data-active={isCurrent(l.href, path)}>{l.label}</Link>
+            ))}
+            <button className={styles.cta} style={{ margin: "6px 4px 2px", justifyContent: "center" }} onClick={connect}>
+              {label}
+            </button>
+          </div>
         </div>
-
-        <button className={styles.cta} onClick={connect} disabled={connecting}>
-          {account ? <span className={styles.dot} /> : null}
-          {account ? shorten(account) : connecting ? "Connecting" : "Connect wallet"}
-        </button>
-
-        <button className={styles.menu} data-open={open} onClick={() => setOpen((v) => !v)} aria-label="Menu">
-          <span />
-        </button>
-      </nav>
-
-      <div className={styles.sheet} data-sheet data-open={open}>
-        {LINKS.map((l) => (
-          <Link key={l.href} href={l.href} data-active={isCurrent(l.href, path)}>{l.label}</Link>
-        ))}
-        <Link href="/feed" data-active={path.startsWith("/feed")}>Live feed</Link>
-        <Link href="/venue" data-active={path.startsWith("/venue")}>Venue</Link>
       </div>
     </div>
   );
