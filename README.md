@@ -31,6 +31,7 @@ does not escape the toll.
 - `substreams/` - `map_swaps` extracts v4 swaps, `map_sandwiches` and `map_attempts` consume it.
 - `indexer/` - subgraph over `Tolled` and `TierSet`, building per-address history.
 - `indexer-mainnet/` - subgraph over Uniswap v4's mainnet PoolManager, which every page reads live.
+- `sink/` - streams `map_attempts` into Postgres and serves the counts the site reads.
 - `mcp/` - ask an MCP client why an address pays what it pays.
 - `scripts/demo.sh` - the whole loop on a local chain.
 
@@ -137,9 +138,9 @@ anything about Gantry.
   order of swaps inside a block. Every number on the site comes from here.
 - `indexer/` indexes Gantry's own `Tolled` and `TierSet` events on Sepolia.
 
-Nothing on the site is read from a checked-in dataset. The address readout, the leaderboard,
-the venue totals and the features the CRE enclave scores are all GraphQL queries made when the
-request arrives.
+Nothing on the site is read from a checked-in dataset. The lookup, the toll feed, the scan
+totals and the features the CRE enclave scores are all queries made when the request arrives -
+the subgraphs over GraphQL, the trace counts from the sink described below.
 
 ### The part only Substreams can do
 
@@ -148,31 +149,78 @@ reverts emits no logs, so **no subgraph can report that it happened** - the data
 missing, it is structurally absent. `map_attempts` reads `transaction_traces`, which carries
 the status, and finds the failures.
 
-Over blocks 25,940,000–25,945,000 that is **2,827 transactions that reached the v4 PoolManager
-and reverted**, across 132 addresses. One address reverted 1,146 times in 5,000 blocks. Losing
-that many races is what a bot looks like when it does not win, and it moves an address to the
-suspected tier in [`score.ts`](scorer/src/score.ts).
+Over the same window the behaviour subgraph covers, that is **9,556 transactions that reached
+the v4 PoolManager and did not succeed**, across 280 addresses. Losing that many races is what
+a bot looks like when it does not win, and it moves an address to the suspected tier in
+[`score.ts`](scorer/src/score.ts).
 
-The originator is the other reason. Without knowing who sent the transaction, a shared router
-is indistinguishable from a bot: Uniswap's Universal Router shows **113,764 swaps from 17,117
-distinct originators** over blocks 25,900,000–25,940,000, a dedicated sandwich bot shows one.
-Both pipelines carry it, and it is why the router is never priced up.
+The originator is the other reason both pipelines exist. Without knowing who sent the
+transaction, a shared router is indistinguishable from a bot: Uniswap's Universal Router shows
+thousands of swaps from thousands of distinct originators, a dedicated sandwich bot shows one.
+That is why the router is never priced up, even though it reverts more than anyone.
 
-### Regenerating the trace data
+### How the two are composed
+
+Neither product answers the question on its own.
+
+The subgraph knows what an address *did*: swaps, sandwiches, round trips, distinct
+originators, first and last seen. It cannot know what an address *tried*. Substreams knows
+what it tried, because traces carry a status that logs do not. A tier needs both, so a lookup
+reads both and the enclave scores both together.
+
+They are kept on the same window deliberately. `scripts/scan-attempts.mjs` asks the subgraph
+for its own indexed head and scans to exactly that block, so the reverted count and the
+behaviour counts always describe the same range. Comparing a 5,000-block failure count against
+a 16,000-block swap count would be meaningless, and it is the kind of drift that is invisible
+once it starts.
+
+### What the standards bought us
+
+Three things we did not have to build:
+
+**A Postgres schema, and the code to fill it.** `substreams sink postgres` reads an arbitrary
+protobuf message and derives tables from it. Pointing it at `map_attempts`, whose output is
+our own `gantry.v1.Attempts`, produced the `attempt` table, the cursor tables and reorg
+handling with **no Rust changes, no `db_out` module and no schema written by hand**. The sink
+resumes from its cursor across restarts, which is the part that would have taken longest to
+get right.
+
+**A reusable extractor.** `map_swaps` knows nothing about Gantry - it takes a block and emits
+v4 swaps. `map_sandwiches`, `map_attempts`, four stores and `graph_out` are all consumers of
+it. Publishing it to the registry means the next v4 pipeline starts where we finished rather
+than parsing the PoolManager again.
+
+**A query layer for free.** The behaviour subgraph is an ordinary event-based subgraph, so it
+came with a GraphQL API, hosted indexing and a head to poll. The only thing we had to run
+ourselves is the piece the standard could not cover.
+
+### What did not work
+
+`graph_out` exists, emits `EntityChanges` and is packaged. It cannot be deployed: Subgraph
+Studio rejects the manifest with *"Substreams-powered Subgraphs, originally intended for
+non-EVM chains, are no longer supported."* Checked again on 12 September 2026 with graph-cli
+0.98.1 against a manifest that builds and uploads to IPFS cleanly, so it is a platform
+decision rather than anything wrong with the package.
+
+That is why the Substreams output reaches the site through a sink rather than a subgraph.
+
+### Running the sink
 
 ```bash
-cd substreams
-substreams run gantry-v0.1.0.spkg map_attempts -e mainnet.eth.streamingfast.io:443 \
-  -s 25940000 -t 25945000 -o jsonl > attempts.jsonl
+substreams sink postgres substreams/gantry-v0.1.0.spkg map_attempts \
+  --dsn "postgres://user:pass@host:5432/gantry?sslmode=disable" -s 25940000
 ```
 
-Aggregated per address into `web/data/failed-attempts.json` and merged into `/api/features`,
-which is what the CRE workflow reads.
+No stop block, so it backfills and then follows the chain head. A small HTTP service in front
+serves the counts, and `web/lib/attempts.ts` reads it per request, falling back to the
+committed snapshot if the sink is unreachable - a stale number rather than a broken page. The
+`/api/lookup?part=attempts` response says which source answered.
 
-Note for anyone trying this: **Substreams-powered subgraphs are no longer supported by
-Subgraph Studio** ("originally intended for non-EVM chains"), so `graph_out` is consumed
-through a sink or the registry rather than by a subgraph. That is why `indexer-mainnet` is an
-ordinary event-based subgraph.
+To regenerate the fallback snapshot without a sink:
+
+```bash
+SUBSTREAMS_API_TOKEN=... node scripts/scan-attempts.mjs
+```
 
 ## Setup
 

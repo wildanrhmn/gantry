@@ -1,0 +1,18 @@
+[Unit]
+Description=Gantry attempts API (reads what the Substreams sink wrote)
+After=network-online.target postgresql.service gantry-sink.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/gantry
+EnvironmentFile=/etc/gantry/db.env
+Environment=PORT=8787
+ExecStart=/usr/bin/node /opt/gantry/attempts-api.mjs
+Restart=always
+RestartSec=10
+MemoryMax=180M
+StandardOutput=append:/var/log/gantry-api.log
+StandardError=append:/var/log/gantry-api.log
+
+[Install]
+WantedBy=multi-user.target
