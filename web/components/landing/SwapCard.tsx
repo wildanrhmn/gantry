@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { gsap, reducedMotion } from "@/lib/motion";
 import { TIERS } from "@/lib/tiers";
-import type { LaneCar } from "@/components/landing/ScanLane";
 import styles from "./SwapCard.module.css";
 
 /** One fixed trade, so the only thing that moves between addresses is the price. */
@@ -13,6 +11,11 @@ const RATE = 4000;
 const HOLD = 3.4;
 
 const FEE_BPS = [5, 30, 60, 100];
+export interface LaneCar {
+  address: string;
+  tier: number;
+}
+
 const TINT = ["#86bd9b", "#8b90a3", "#cf9257", "#cb7b81"];
 
 const plate = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -20,7 +23,6 @@ const plate = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 export function SwapCard({ cars }: { cars: LaneCar[] }) {
   const [i, setI] = useState(0);
   const card = useRef<HTMLDivElement>(null);
-  const frame = useRef<HTMLDivElement>(null);
   const out = useRef<HTMLSpanElement>(null);
   const feeRef = useRef<HTMLSpanElement>(null);
   const tick = useRef<HTMLSpanElement>(null);
@@ -61,17 +63,9 @@ export function SwapCard({ cars }: { cars: LaneCar[] }) {
         if (feeRef.current) feeRef.current.textContent = `${proxy.fee.toFixed(2)}%`;
       },
     });
-    const flare = frame.current
-      ? gsap.fromTo(
-          frame.current,
-          { filter: "brightness(1.9)" },
-          { filter: "brightness(1)", duration: 0.9, ease: "power2.out" },
-        )
-      : null;
 
     return () => {
       tween.kill();
-      flare?.kill();
     };
   }, [received, tier]);
 
@@ -83,9 +77,9 @@ export function SwapCard({ cars }: { cars: LaneCar[] }) {
       const box = el.getBoundingClientRect();
       const x = (e.clientX - box.left) / box.width - 0.5;
       const y = (e.clientY - box.top) / box.height - 0.5;
-      gsap.to(el, { rotateY: x * 7, rotateX: -y * 7, duration: 0.6, ease: "power3.out" });
+      gsap.to(el, { rotateY: -6.5 + x * 8, rotateX: 3 - y * 7, duration: 0.6, ease: "power3.out" });
     };
-    const reset = () => gsap.to(el, { rotateY: 0, rotateX: 0, duration: 0.9, ease: "power3.out" });
+    const reset = () => gsap.to(el, { rotateY: -6.5, rotateX: 3, duration: 1.1, ease: "power3.out" });
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerleave", reset);
     return () => {
@@ -97,68 +91,66 @@ export function SwapCard({ cars }: { cars: LaneCar[] }) {
   return (
     <div
       className={styles.stage}
-      style={{ perspective: "1100px", ["--tier-colour" as string]: TINT[tier] }}
+      style={{ perspective: "1500px", ["--tier-colour" as string]: TINT[tier] }}
     >
-      <span className={styles.cast} style={{ ["--cast-colour" as string]: TINT[tier] }} />
+      <div className={styles.deck} ref={card} aria-hidden="true">
+        <span className={styles.ghost} data-g="2" />
+        <span className={styles.ghost} data-g="1" />
+        <span className={styles.cast} style={{ ["--cast-colour" as string]: TINT[tier] }} />
 
-      <div className={styles.frame} ref={frame}>
-        <span className={styles.corner} data-c="tl" />
-        <span className={styles.corner} data-c="tr" />
-        <span className={styles.corner} data-c="bl" />
-        <span className={styles.corner} data-c="br" />
+        <div className={styles.frame}>
+          <span className={styles.ringGlow}><span className={styles.spin} /></span>
+          <span className={styles.ring}><span className={styles.spin} /></span>
+          <span className={styles.rim} />
 
-      <div className={styles.card} ref={card}>
+      <div className={styles.card}>
+        <span className={styles.glare} />
         <span className={styles.track}><span className={styles.tick} ref={tick} /></span>
-
-        <div className={styles.head}>
-          <span className={styles.title}>Swap</span>
-          <span className={styles.venue}>uniswap v4 · gantry pool</span>
-        </div>
 
         <div className={styles.leg}>
           <span className={styles.legLabel}>You pay</span>
           <span className={styles.legRow}>
             <span className={styles.amount}>{PAY.toLocaleString()}</span>
-            <span className={styles.token}>gUSD</span>
+            <span className={styles.token}>
+              <img className={styles.coin} src="/tokens/usdc.svg" alt="" width={20} height={20} />
+              gUSD
+            </span>
           </span>
         </div>
 
-        <div className={styles.hinge}><span>↓</span></div>
+        <div className={styles.hinge}><span>&darr;</span></div>
 
         <div className={styles.leg}>
           <span className={styles.legLabel}>You receive</span>
           <span className={styles.legRow}>
             <span className={styles.amount} ref={out}>{received.toFixed(6)}</span>
-            <span className={styles.token}>gETH</span>
+            <span className={styles.token}>
+              <img className={styles.coin} src="/tokens/eth.svg" alt="" width={20} height={20} />
+              gETH
+            </span>
           </span>
         </div>
 
-        <div className={styles.pricing}>
-          <div className={styles.row}>
-            <span className={styles.key}>Priced as</span>
-            <span className={styles.val}>{plate(current.address)}</span>
-          </div>
-          <div className={styles.row}>
-            <span className={styles.key}>Verdict</span>
-            <span className={styles.chip} data-tier={tier}>
+        <div className={styles.verdict}>
+          <div className={styles.verdictTop}>
+            <span className={styles.who}>{plate(current.address)}</span>
+            <span className={styles.chip}>
               <span className={styles.lamp} />
               {verdict.name}
             </span>
           </div>
-          <div className={styles.row}>
-            <span className={styles.key}>Fee this swap</span>
-            <span className={`${styles.val} ${styles.fee}`} data-tier={tier}>
-              <span ref={feeRef}>{(FEE_BPS[tier] / 100).toFixed(2)}%</span>
-              <span className={styles.key}> · {feeInToken.toFixed(2)} gUSD</span>
+          <div className={styles.feeRow}>
+            <span>
+              <span className={styles.fee} ref={feeRef}>{(FEE_BPS[tier] / 100).toFixed(2)}%</span>
+              <span className={styles.feeLabel}>fee this swap</span>
             </span>
+            <span className={styles.feeSide}>{feeInToken.toFixed(2)} gUSD</span>
           </div>
         </div>
+      </div>
+        </div>
+      </div>
 
-        <Link href={`/address/${current.address}`} className={styles.go}>
-          Why does it pay this?
-        </Link>
-      </div>
-      </div>
     </div>
   );
 }

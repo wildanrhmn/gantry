@@ -1,9 +1,9 @@
 import { Hero } from "@/components/landing/Hero";
 import { Marquee } from "@/components/landing/Marquee";
-import { ScanBand } from "@/components/landing/ScanBand";
-import { BuiltOn, FinalCta, Mechanism, Problem, Proof } from "@/components/landing/Sections";
+import { BuiltOn, Problem, Proof } from "@/components/landing/Sections";
+import { Mechanism } from "@/components/landing/Mechanism";
 import { laneSample } from "@/lib/mainnet";
-import { scanWindow } from "@/lib/lookup";
+import { scanWindow, worstOffenders } from "@/lib/lookup";
 
 export const revalidate = 30;
 
@@ -11,9 +11,15 @@ export const revalidate = 30;
 const PLACEHOLDER = [{ address: "0x0000000000000000000000000000000000000000", tier: 1 }];
 
 export default async function Home() {
-  const [scan, lane] = await Promise.all([scanWindow(), laneSample()]);
+  const [scan, lane, worst] = await Promise.all([scanWindow(), laneSample(), worstOffenders(1)]);
   const cars = lane.length ? lane.map((r) => ({ address: r.id, tier: r.tier })) : PLACEHOLDER;
   const count = (v: number) => v.toLocaleString("en-US");
+
+  // the address the mechanism section follows, taken live rather than written down
+  const top = worst[0];
+  const subject = top
+    ? { address: top.id, swaps: Number(top.swaps), sandwiches: Number(top.sandwiches), tier: top.tier }
+    : { address: PLACEHOLDER[0].address, swaps: 0, sandwiches: 0, tier: 1 };
 
   const tape: [string, string][] = [
     ["swaps read", count(scan.swaps)],
@@ -30,14 +36,12 @@ export default async function Home() {
 
   return (
     <>
-      <Hero cars={cars} />
+      <Hero cars={cars} stats={scan} />
       <Marquee items={tape} />
       <Problem scan={scan} />
-      <Mechanism />
+      <Mechanism subject={subject} />
       <Proof />
-      <ScanBand stats={scan} cars={cars} />
       <BuiltOn />
-      <FinalCta />
     </>
   );
 }

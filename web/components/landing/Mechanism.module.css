@@ -1,0 +1,141 @@
+.cine {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: var(--ground);
+}
+
+/* the hero's light, so the two sections read as one room */
+.aura {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 44% 52% at 74% 40%, rgba(217, 69, 126, 0.1), transparent 64%),
+    radial-gradient(ellipse 56% 48% at 68% 48%, rgba(220, 220, 227, 0.045), transparent 66%),
+    radial-gradient(ellipse 80% 70% at 50% 50%, transparent 56%, rgba(13, 14, 19, 0.7) 100%);
+  pointer-events: none;
+}
+.rules {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(90deg, rgba(220, 220, 227, 0.03) 1px, transparent 1px);
+  background-size: 132px 100%;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent);
+  pointer-events: none;
+}
+
+/* the opening card, held at rest so the approach is never a blank section */
+.title {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.titleMain {
+  font-family: var(--font-display), sans-serif;
+  font-variation-settings: "wdth" 104;
+  font-weight: 700;
+  font-size: clamp(32px, 5vw, 66px);
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  margin: 0;
+  color: var(--bone);
+}
+.titleSub {
+  margin: var(--s5) 0 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: calc(var(--nav-h) + var(--s6)) var(--s6) var(--s10);
+  display: grid;
+  gap: var(--s10);
+  justify-items: center;
+  text-align: center;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s3);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.kicker::before { content: ""; width: 22px; height: 1px; background: var(--accent); }
+
+/* the shots sit on top of one another and cross-fade */
+.shots { position: relative; width: 100%; min-height: 150px; }
+.shot { position: absolute; inset: 0; display: grid; justify-items: center; }
+.shotNum { font-family: var(--font-mono), monospace; font-size: 11px; color: var(--accent); letter-spacing: 0.18em; }
+.shotTitle {
+  margin: var(--s3) 0 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(30px, 3.4vw, 46px);
+  letter-spacing: -0.025em;
+  color: var(--bone);
+}
+.shotBody {
+  margin: var(--s4) 0 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+  max-width: 52ch;
+}
+
+.stage { position: relative; width: 100%; aspect-ratio: 2.4; }
+.svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.meter { display: flex; align-items: center; gap: var(--s4); width: min(460px, 100%); }
+.segs { display: flex; gap: 6px; flex: 1; }
+.seg { position: relative; height: 2px; flex: 1; background: var(--line); overflow: hidden; }
+.seg i { position: absolute; inset: 0; background: var(--accent); transform: scaleX(0); transform-origin: left center; }
+.count { font-family: var(--font-mono), monospace; font-size: 11px; color: var(--fg-dim); }
+
+/* stage vocabulary */
+.svg :global(.frame) { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+.svg :global(.cap) {
+  font-family: var(--font-mono), monospace;
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  fill: var(--fg-dim);
+  text-anchor: middle;
+}
+.svg :global(.rail) { stroke: var(--edge); stroke-width: 2; stroke-dasharray: 5 7; }
+.svg :global(.pk) { fill: var(--accent); }
+.svg :global(.addr) { font-family: var(--font-mono), monospace; font-size: 19px; fill: var(--bone); text-anchor: middle; }
+.svg :global(.stat) { font-family: var(--font-mono), monospace; font-size: 21px; fill: var(--bone); }
+.svg :global(.statL) { font-family: var(--font-mono), monospace; font-size: 13px; fill: var(--fg-dim); }
+.svg :global(.stat[data-tone="bad"]) { fill: var(--danger); }
+.svg :global(.seal) { fill: none; stroke: var(--accent); stroke-width: 2; }
+.svg :global(.rung) { fill: var(--line); }
+.svg :global(.rung[data-on="true"]) { fill: var(--danger); }
+.svg :global(.verdict) { font-family: var(--font-mono), monospace; font-size: 16px; fill: var(--danger); text-anchor: middle; letter-spacing: 0.14em; }
+.svg :global(.fee) { font-family: var(--font-mono), monospace; font-size: 60px; fill: var(--danger); text-anchor: middle; }
+.svg :global(.mark) { rx: 6; }
+
+@media (max-width: 900px) {
+  .inner { padding: calc(var(--nav-h) + var(--s5)) var(--s4) var(--s8); gap: var(--s8); }
+  .shots { min-height: 190px; }
+  .stage { aspect-ratio: 1.5; }
+}

@@ -1,20 +1,25 @@
 import { ADDRESSES } from "@/lib/chain";
 import styles from "./Footer.module.css";
 
+const GITHUB = "https://github.com/wildanrhmn/gantry";
+
 export function Footer() {
   return (
     <footer className={styles.foot}>
       <div className={styles.inner}>
-        <p>
-          Hook{" "}
+        <span className={styles.who}>
+          <span className={styles.mark} />
+          <span className={styles.name}>GANTRY</span>
+          <span>| a Uniswap v4 hook that prices each swap by the caller</span>
+        </span>
+
+        <span className={styles.meta}>
+          <span>ETHOnline 2026</span>
           <a href={`https://sepolia.etherscan.io/address/${ADDRESSES.gantry}`} target="_blank" rel="noreferrer">
-            {ADDRESSES.gantry}
+            hook ↗
           </a>
-        </p>
-        <p className={styles.line}>
-          Behaviour read from Ethereum mainnet. Tiers enforced on Sepolia. Nobody is ever blocked
-          from trading — the fee changes, not the access.
-        </p>
+          <a href={GITHUB} target="_blank" rel="noreferrer">source ↗</a>
+        </span>
       </div>
     </footer>
   );

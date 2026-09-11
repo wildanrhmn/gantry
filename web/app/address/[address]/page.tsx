@@ -12,10 +12,10 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { address } = await params;
   const result = await lookup(address);
-  if (!result) return { title: "Not an address — Gantry" };
+  if (!result) return { title: "Not an address | Gantry" };
   const t = tierOf(result.tier);
   return {
-    title: `${t.name} · ${t.fee} — Gantry`,
+    title: `${t.name} · ${t.fee} | Gantry`,
     description: `${address} would pay ${t.fee} on a Gantry pool. Here is what was measured.`,
   };
 }

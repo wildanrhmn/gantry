@@ -2,7 +2,7 @@ import { ADDRESSES } from "@/lib/chain";
 import { scanWindow } from "@/lib/lookup";
 import styles from "./how.module.css";
 
-export const metadata = { title: "How it works — Gantry" };
+export const metadata = { title: "How it works | Gantry" };
 export const revalidate = 30;
 
 export default async function HowPage() {
@@ -35,7 +35,7 @@ export default async function HowPage() {
         <div className={styles.notes}>
           <Note title="Unknown is not clean">
             An address nobody has scored lands on the default tier, never the cheapest one. So
-            rotating to a fresh address does not escape the toll — it guarantees it.
+            rotating to a fresh address does not escape the toll | it guarantees it.
           </Note>
           <Note title="Arbitrage is not sandwiching">
             Arbitrage rebalances a pool and LPs want it. Only extraction around another trade is

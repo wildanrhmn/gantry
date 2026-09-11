@@ -4,7 +4,7 @@ import { tier as tierOf } from "@/lib/tiers";
 import table from "@/components/Table.module.css";
 
 export const revalidate = 10;
-export const metadata = { title: "Feed — Gantry" };
+export const metadata = { title: "Feed | Gantry" };
 
 export default async function FeedPage() {
   const data = await recentTolls(50);

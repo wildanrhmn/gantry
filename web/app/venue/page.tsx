@@ -6,7 +6,7 @@ import table from "@/components/Table.module.css";
 import styles from "./venue.module.css";
 
 export const revalidate = 30;
-export const metadata = { title: "Venue — Gantry" };
+export const metadata = { title: "Venue | Gantry" };
 
 export default async function VenuePage() {
   const data = await venue();
@@ -88,7 +88,7 @@ export default async function VenuePage() {
 
 const MEANING = [
   "Enough history, no extraction found",
-  "Nobody has judged it yet — the default",
+  "Nobody has judged it yet | the default",
   "Some extraction signal",
   "Repeatedly opened and closed around other trades",
 ];

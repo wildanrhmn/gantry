@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { WalletProvider } from "@/components/WalletProvider";
 
 export const metadata: Metadata = {
-  title: "Gantry — every swap gets read as it passes",
+  title: "Gantry | every swap gets read as it passes",
   description:
     "A Uniswap v4 hook that prices each swap by the caller's on-chain behaviour. Paste an address to see what it would pay, and why.",
 };

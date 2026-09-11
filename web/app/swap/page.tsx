@@ -1,7 +1,7 @@
 import { Swap } from "@/components/Swap";
 import { ADDRESSES } from "@/lib/chain";
 
-export const metadata = { title: "Swap — Gantry" };
+export const metadata = { title: "Swap | Gantry" };
 
 export default function SwapPage() {
   return (

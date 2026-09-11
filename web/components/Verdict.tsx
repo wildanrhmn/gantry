@@ -27,7 +27,7 @@ export function Verdict({ result }: { result: Lookup }) {
       {!result.scored ? (
         <p className={styles.notice}>
           This address did not trade in the scanned window, so it lands on the default tier.
-          Unknown is not the same as clean — nobody has judged it.
+          Unknown is not the same as clean | nobody has judged it.
         </p>
       ) : null}
 

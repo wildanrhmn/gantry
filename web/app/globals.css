@@ -7,7 +7,11 @@
   --panel-2: #23262f;
   --line: #2d3039;
   --edge: #3c404d;
-  --bone: #dcd8cf;
+  --bone: #dcdce3;
+  /* Uniswap's pink, because this is a Uniswap hook */
+  --accent: #d9457e;
+  --accent-hi: #e8629a;
+  /* the scan lane's sign stays amber, the way a real highway sign is */
   --amber: #d9a441;
 
   --brand: #8b90a3;
@@ -26,14 +30,14 @@
   --border-subtle: #262931;
 
   /* Tiers stay legible apart without any of them shouting. */
-  --success: #86bd9b;
-  --success-strong: #73a889;
-  --success-soft: #86bd9b1f;
-  --danger: #cb7b81;
-  --danger-strong: #b76a71;
-  --danger-soft: #cb7b811f;
-  --warning: #cf9257;
-  --warning-soft: #cf92571f;
+  --success: #74c79a;
+  --success-strong: #5fb187;
+  --success-soft: #74c79a1f;
+  --danger: #e2624c;
+  --danger-strong: #cb5442;
+  --danger-soft: #e2624c1f;
+  --warning: #e0a458;
+  --warning-soft: #e0a4581f;
 
   --asphalt: var(--ground-2);
   --asphalt-haze: #0d0e14;
@@ -80,7 +84,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: rgba(217, 164, 65, 0.28); color: var(--bone); }
+::selection { background: rgba(217, 69, 126, 0.32); color: var(--bone); }
 
 :focus-visible {
   outline: 2px solid var(--brand);
@@ -131,15 +135,15 @@ body {
 /* Light falls from one source above and dies out at the edges. */
 .field {
   background:
-    radial-gradient(116% 84% at 50% -6%, rgba(220, 216, 207, 0.05) 0%, rgba(220, 216, 207, 0.015) 20%, transparent 52%),
+    radial-gradient(116% 84% at 50% -6%, rgba(220, 220, 227, 0.05) 0%, rgba(220, 220, 227, 0.015) 20%, transparent 52%),
     radial-gradient(90% 70% at 50% 34%, #1f212a 0%, #14151b 46%, var(--ground) 100%);
 }
 
 /* An engineering grid, faded at the frame edges so it never reads as a template. */
 .blueprint {
   background-image:
-    linear-gradient(rgba(220, 216, 207, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(220, 216, 207, 0.028) 1px, transparent 1px);
+    linear-gradient(rgba(220, 220, 227, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(220, 220, 227, 0.028) 1px, transparent 1px);
   background-size: 48px 48px;
   -webkit-mask-image: radial-gradient(130% 100% at 50% 0%, #000 30%, transparent 82%);
   mask-image: radial-gradient(130% 100% at 50% 0%, #000 30%, transparent 82%);
