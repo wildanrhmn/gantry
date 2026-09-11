@@ -67,8 +67,8 @@ signed by the wrong key quietly falls back to pricing the caller.
 
 | Contract | Address |
 | --- | --- |
-| Gantry hook | [`0xa3D2A9ee28198496D5DF469A8FF149aD2d780080`](https://sepolia.etherscan.io/address/0xa3D2A9ee28198496D5DF469A8FF149aD2d780080) |
-| Demo pool router | [`0x867a6f9CAcC6d7341Fad9d0d5Fac193dF684C0a9`](https://sepolia.etherscan.io/address/0x867a6f9CAcC6d7341Fad9d0d5Fac193dF684C0a9) |
+| Gantry hook | [`0x4e6D007c91aB5491c1De9E491f18fbE18ACC8080`](https://sepolia.etherscan.io/address/0x4e6D007c91aB5491c1De9E491f18fbE18ACC8080) |
+| Demo pool router | [`0x88decb029a808357402044588f2904504CaaFe39`](https://sepolia.etherscan.io/address/0x88decb029a808357402044588f2904504CaaFe39) |
 | TierOracle | [`0x846d3eF24c3c6e079Bd95cFeACC08B21427C9132`](https://sepolia.etherscan.io/address/0x846d3eF24c3c6e079Bd95cFeACC08B21427C9132) |
 | TierReportReceiver | [`0x351278Ef6FF1325c69127255936e5E7d0B47A1A4`](https://sepolia.etherscan.io/address/0x351278Ef6FF1325c69127255936e5E7d0B47A1A4) |
 | PoolManager | `0xE03A1074c86CFeDd5C142C4F04F1a1536e203543` (Uniswap canonical) |
@@ -76,9 +76,9 @@ signed by the wrong key quietly falls back to pricing the caller.
 Subgraphs:
 
 - mainnet behaviour - `https://api.studio.thegraph.com/query/1760064/gantry-mainnet/v0.0.2`
-- Gantry's own events - `https://api.studio.thegraph.com/query/1760064/gantry/0.0.2`
+- Gantry's own events - `https://api.studio.thegraph.com/query/1760064/gantry/v0.0.3`
 
-The hook address ends `0080` because v4 reads a hook's permissions out of its own address.
+The hook address ends `8080` because v4 reads a hook's permissions out of its own address.
 The salt was mined until the low 14 bits equalled 128, the `BEFORE_SWAP` bit.
 
 ### Where to look in the code
@@ -94,19 +94,21 @@ The salt was mined until the low 14 bits equalled 128, the `BEFORE_SWAP` bit.
 
 Feedback on building against the v4 stack is in [FEEDBACK.md](FEEDBACK.md).
 
-### One address, two prices
+### One address, three prices
 
-The fee is decided in [`Gantry._beforeSwap`](contracts/src/Gantry.sol). These three tolls
-are on Sepolia, same pool, same swap size:
+The fee is decided in [`Gantry._beforeSwap`](contracts/src/Gantry.sol). The same 1,000 gUSD
+swapped three times on Sepolia, same pool, same size, measured as what actually arrived:
 
 ```
-block 11677086  0xd54db805...  tier 3  fee 1.00%
-block 11677086  0x82fdc5c7...  tier 1  fee 0.30%
-block 11677137  0x82fdc5c7...  tier 0  fee 0.05%
+priced as the router, no attestation   0.30%   992.30 gETH
+priced as the caller, tier 3           1.00%   985.82 gETH
+priced as the caller, tier 0           0.05%   994.30 gETH
 ```
 
-The last two are the same address. Between them a signed report moved it from the default
-tier to clean, and the next identical swap cost six times less.
+Swap through a router and the hook sees the router, so you pay the default. Sign an
+attestation and it sees you: the same wallet, re-scored between swaps, kept 8.47 more
+tokens out of 1,000. The gap is slightly under the 0.95 percent the fees imply because
+each swap moves the price a little for the next one.
 
 ### Swapping against it
 
@@ -115,8 +117,7 @@ the router, swap. The hook charges whatever tier the caller sits on.
 
 Because a shared router is what calls the PoolManager, the hook sees the router rather than
 the trader. A trader can sign an EIP-712 attestation and pass it as hook data to be priced
-as themselves instead. That is what the `Attestation(address trader,bytes32 poolId,uint256
-deadline)` type in [`Gantry.sol`](contracts/src/Gantry.sol) is for.
+as themselves instead. That is what the `Attestation(address trader,address sender,bytes32 poolId,uint256 nonce,uint256 deadline)` type in [`Gantry.sol`](contracts/src/Gantry.sol) is for.
 
 ## How The Graph is used
 

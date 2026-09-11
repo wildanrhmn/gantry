@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useWallet } from "@/components/WalletProvider";
-import { CHAIN } from "@/lib/chain";
+import { ADDRESSES, CHAIN, oracleAbi, publicClient } from "@/lib/chain";
 import { TIERS, shorten } from "@/lib/tiers";
 import styles from "./AccountMenu.module.css";
 
@@ -72,13 +72,14 @@ export function AccountMenu({ className }: { className?: string }) {
     };
   }, [open]);
 
-  // what this account would pay, read from the same lookup the rest of the site uses
+  // Read from the oracle the hook reads, not from our own scoring view. This number
+  // is what the next swap actually costs, so it has to come from the chain.
   useEffect(() => {
     if (!account) return setTier(null);
     let live = true;
-    fetch(`/api/lookup/${account}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => live && setTier(d?.tier ?? 1))
+    publicClient
+      .readContract({ address: ADDRESSES.oracle, abi: oracleAbi, functionName: "tierOf", args: [account] })
+      .then((t) => live && setTier(Number(t)))
       .catch(() => live && setTier(1));
     return () => {
       live = false;

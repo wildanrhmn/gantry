@@ -103,11 +103,11 @@ export function Problem({ scan }: { scan: Scan }) {
   );
 }
 
-/** Three tolls actually charged on Sepolia. The last two are the same account. */
+/** Four tolls actually charged on Sepolia, in order. The first shows the problem. */
 const TOLLS = [
-  { fee: "1.00%", name: "extractor", who: "0xd54db805…", block: "11,677,086", tone: 3 },
-  { fee: "0.30%", name: "unknown", who: "0x82fdc5c7…", block: "11,677,086", tone: 1 },
-  { fee: "0.05%", name: "clean", who: "0x82fdc5c7…", block: "11,677,137", tone: 0 },
+  { fee: "0.30%", name: "the router", who: "no attestation", got: "992.30", tone: 1 },
+  { fee: "1.00%", name: "extractor", who: "attested", got: "985.82", tone: 3 },
+  { fee: "0.05%", name: "clean", who: "attested", got: "994.30", tone: 0 },
 ];
 
 const TONE = ["var(--success)", "var(--fg-muted)", "var(--warning)", "var(--danger)"];
@@ -148,13 +148,14 @@ export function Proof() {
                   <span className={styles.tollDot} />
                   {t.name}
                 </span>
-                <span className={styles.tollWho}>{t.who}</span>
-                <span className={styles.tollBlock}>block {t.block}</span>
+                <span className={styles.tollWho}>{t.got} gETH</span>
+                <span className={styles.tollBlock}>{t.who}</span>
               </div>
             ))}
             <p className={styles.tollNote}>
-              The last two are the same address, 51 blocks apart. A signed report landed in
-              between and the next identical swap cost <strong>six times less</strong>.
+              Swap through a router and the hook sees the router, so you pay the default. Sign an
+              attestation and it sees you: the same wallet, re-scored, kept{" "}
+              <strong>8.47 more tokens out of 1,000</strong>.
             </p>
           </div>
         </Reveal>

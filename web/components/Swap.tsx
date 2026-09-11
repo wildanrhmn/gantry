@@ -20,6 +20,7 @@ import {
   POOL_KEY,
   erc20Abi,
   gantryAbi,
+  oracleAbi,
   encodeAttestation,
   poolId,
   publicClient,
@@ -44,11 +45,12 @@ export function Swap() {
   const { account, connecting, connect, client: wallet } = useWallet();
   const [balance, setBalance] = useState<bigint | null>(null);
   const [allowance, setAllowance] = useState<bigint | null>(null);
-  const [amount, setAmount] = useState("1");
+  const [amount, setAmount] = useState("1000");
   const [attestation, setAttestation] = useState<Hex | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [tier, setTier] = useState<number | null>(null);
 
   const refresh = useCallback(async (who: Address) => {
     const [bal, allow] = await Promise.all([
@@ -67,6 +69,19 @@ export function Swap() {
   useEffect(() => {
     if (account) void refresh(account);
   }, [account, refresh]);
+
+  // The tier the hook will actually read when this swap lands.
+  useEffect(() => {
+    if (!account) return setTier(null);
+    let live = true;
+    publicClient
+      .readContract({ address: ADDRESSES.oracle, abi: oracleAbi, functionName: "tierOf", args: [account] })
+      .then((t) => live && setTier(Number(t)))
+      .catch(() => live && setTier(1));
+    return () => {
+      live = false;
+    };
+  }, [account, receipt]);
 
   async function run(label: string, fn: () => Promise<void>) {
     setError(null);
@@ -178,6 +193,31 @@ export function Swap() {
       await refresh(account);
     });
 
+  // Without an attestation the hook prices the router, which is nobody's history.
+  const pricedAs = attestation ? (tier ?? 1) : 1;
+  const FEE_BPS = [5, 30, 60, 100];
+  const size = Number(amount) || 0;
+  const out = (bps: number) => (size * (1 - bps / 10_000)).toFixed(4);
+  // Unsigned, the honest comparison is what your own tier would have paid. Signed, it is
+  // what everyone else pays.
+  const own = tier ?? 1;
+  const delta = attestation
+    ? (size * (FEE_BPS[1] - FEE_BPS[pricedAs])) / 10_000
+    : (size * (FEE_BPS[own] - FEE_BPS[pricedAs])) / 10_000;
+  const TONE = ["var(--success)", "var(--fg-muted)", "var(--warning)", "var(--danger)"];
+  const TONE_SOFT = [
+    "rgba(116, 199, 154, 0.1)",
+    "rgba(220, 220, 227, 0.05)",
+    "rgba(224, 164, 88, 0.1)",
+    "rgba(226, 98, 76, 0.1)",
+  ];
+  const TONE_LINE = [
+    "rgba(116, 199, 154, 0.3)",
+    "rgba(220, 220, 227, 0.1)",
+    "rgba(224, 164, 88, 0.3)",
+    "rgba(226, 98, 76, 0.3)",
+  ];
+
   const has = (v: bigint | null) => v !== null && v > BigInt(0);
   // Nothing is "done" until there is an account to have done it.
   const needsTokens = !account || !has(balance);
@@ -212,6 +252,50 @@ export function Swap() {
           {busy === "swap" ? "Swapping" : "Swap"}
         </button>
       </div>
+
+      {account ? (
+        <div
+          className={styles.quote}
+          style={{
+            ["--tone" as string]: TONE[pricedAs],
+            ["--tone-soft" as string]: TONE_SOFT[pricedAs],
+            ["--tone-line" as string]: TONE_LINE[pricedAs],
+          }}
+        >
+          <div className={styles.quoteTop}>
+            <span className={styles.quoteLabel}>You receive, before gas</span>
+            <span className={styles.quoteChip}>
+              <span className={styles.quoteDot} />
+              {tierOf(pricedAs).name} · {(FEE_BPS[pricedAs] / 100).toFixed(2)}%
+            </span>
+          </div>
+
+          <div className={styles.quoteOut}>
+            <span className={styles.quoteBig}>{out(FEE_BPS[pricedAs])}</span>
+            <span className={styles.quoteUnit}>{BUY_SYMBOL}</span>
+          </div>
+
+          <div className={styles.quoteVs}>
+            <span>
+              {pricedAs === 1
+                ? `At your own tier (${tierOf(own).name}) you would get ${out(FEE_BPS[own])}`
+                : "Against the 0.30% everyone else pays"}
+            </span>
+            <span className={styles.quoteDelta} data-sign={delta < 0 ? "worse" : undefined}>
+              {delta === 0
+                ? "no difference"
+                : `${delta > 0 ? "+" : ""}${delta.toFixed(2)} ${BUY_SYMBOL}`}
+            </span>
+          </div>
+
+          {!attestation ? (
+            <p className={styles.quoteWarn}>
+              Unsigned, so the hook sees the router and not you. Sign above to be priced on your
+              own history.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {error ? <p className={styles.err}>{error}</p> : null}
       {!account ? <p className={styles.note}>Sepolia only. The tokens mint freely, so this costs nothing but gas.</p> : null}

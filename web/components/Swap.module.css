@@ -73,3 +73,64 @@
   .step { grid-template-columns: auto 1fr; }
   .act { grid-column: 1 / -1; }
 }
+
+/* what this swap will cost, before it is sent */
+.quote {
+  margin-top: var(--s5);
+  border: 1px solid var(--tone-line, var(--border));
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--tone-soft, transparent), transparent 84%), var(--ground-2);
+  padding: var(--s5) var(--s6) var(--s6);
+}
+.quoteTop { display: flex; align-items: center; justify-content: space-between; gap: var(--s4); }
+.quoteLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.quoteChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  background: var(--tone-soft, rgba(220, 220, 227, 0.06));
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tone, var(--fg-muted));
+}
+.quoteDot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.quoteOut {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  margin-top: var(--s4);
+}
+.quoteBig {
+  font-family: var(--font-mono), monospace;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.quoteUnit { font-family: var(--font-mono), monospace; font-size: 13px; color: var(--fg-muted); }
+/* the line that makes the benefit legible: what the default would have cost you */
+.quoteVs {
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  font-size: 13px;
+  color: var(--fg-dim);
+}
+.quoteDelta { font-family: var(--font-mono), monospace; color: var(--success); }
+.quoteDelta[data-sign="worse"] { color: var(--danger); }
+.quoteWarn { margin-top: var(--s3); font-size: 12px; color: var(--warning); }
