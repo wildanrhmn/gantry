@@ -24,11 +24,29 @@
   height: 58px;
   padding: 0 8px 0 var(--s5);
   border-radius: 14px;
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel-2) 96%, transparent);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(220, 220, 227, 0.1);
+  /* glass: mostly the page behind it, blurred, with a lit top edge */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--panel-2) 62%, transparent),
+    color-mix(in srgb, var(--ground) 52%, transparent)
+  );
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 14px 40px -20px rgba(0, 0, 0, 0.75);
+  transition: background 260ms ease, border-color 260ms ease;
+}
+/* firms up once content is passing underneath, so the links stay readable */
+.bar[data-lifted="true"] {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--panel-2) 82%, transparent),
+    color-mix(in srgb, var(--ground) 76%, transparent)
+  );
+  border-color: rgba(220, 220, 227, 0.13);
 }
 
 .brand {
@@ -42,7 +60,7 @@
   white-space: nowrap;
   transition: color 200ms ease;
 }
-.brand:hover { color: var(--amber); }
+.brand:hover { color: var(--accent); }
 
 /* absolutely centred, so the links sit on the middle of the screen rather than
    wherever the brand and the buttons happen to leave room */
@@ -65,7 +83,7 @@
   transition: color 200ms ease;
 }
 .link:hover { color: var(--fg); }
-.link[data-active="true"] { color: var(--amber); }
+.link[data-active="true"] { color: var(--accent); }
 
 .right { display: flex; align-items: center; gap: var(--s4); }
 
@@ -94,8 +112,9 @@
   white-space: nowrap;
   transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
 }
-.cta:hover { color: var(--amber); border-color: var(--amber); }
+.cta:hover { color: var(--accent); border-color: var(--accent); }
 .cta:disabled { cursor: progress; }
+.ctaWide { composes: cta; width: 100%; justify-content: center; }
 .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); }
 
 .burger {
@@ -111,7 +130,7 @@
   background: transparent;
   cursor: pointer;
 }
-.burger:hover { background: rgba(220, 216, 207, 0.05); }
+.burger:hover { background: rgba(220, 220, 227, 0.05); }
 .burger span {
   display: block;
   width: 18px;
@@ -138,10 +157,10 @@
   flex-direction: column;
   padding: var(--s2);
   border-radius: 16px;
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel-2) 97%, transparent);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  border: 1px solid rgba(220, 220, 227, 0.1);
+  background: color-mix(in srgb, var(--panel-2) 88%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 .panel a {
@@ -153,8 +172,8 @@
   color: var(--fg-muted);
   text-decoration: none;
 }
-.panel a:hover { color: var(--fg); background: rgba(220, 216, 207, 0.04); }
-.panel a[data-active="true"] { color: var(--amber); }
+.panel a:hover { color: var(--fg); background: rgba(220, 220, 227, 0.04); }
+.panel a[data-active="true"] { color: var(--accent); }
 
 @media (max-width: 780px) {
   .links { display: none; }
