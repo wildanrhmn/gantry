@@ -12,11 +12,12 @@
 .col {
   pointer-events: auto;
   width: 100%;
-  max-width: 768px;
+  max-width: 1010px;
 }
 
 /* frosted panel: tinted toward the page, blurred, with a soft drop rather than a bevel */
 .bar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -43,7 +44,16 @@
 }
 .brand:hover { color: var(--amber); }
 
-.links { display: flex; align-items: center; gap: var(--s8); }
+/* absolutely centred, so the links sit on the middle of the screen rather than
+   wherever the brand and the buttons happen to leave room */
+.links {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--s8);
+}
 .link {
   font-family: var(--font-mono), monospace;
   font-weight: 500;

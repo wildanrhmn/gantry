@@ -8,45 +8,14 @@
   background: var(--ground);
 }
 
-.blueprint { position: absolute; inset: 0; pointer-events: none; }
-
-/* one warm wash across the field, then the dark closes back in top and bottom */
-.wash {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #3c404d38, transparent 52%, #23262f45);
-  filter: blur(64px);
-  pointer-events: none;
-}
-.close {
+/* one soft lift from above, and the edges settling back into the ground */
+.glow {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(0deg, var(--ground), transparent 38%, transparent 60%, var(--ground)),
-    radial-gradient(ellipse 80% 66% at 50% 46%, transparent 42%, #0f1015c4 100%);
+    radial-gradient(ellipse 62% 48% at 50% 8%, rgba(220, 216, 207, 0.045), transparent 62%),
+    radial-gradient(ellipse 70% 56% at 50% 52%, transparent 52%, rgba(14, 15, 20, 0.62) 100%);
   pointer-events: none;
-}
-
-/* long, slow bars of light drifting behind everything */
-.shapes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.shape {
-  position: absolute;
-  border-radius: var(--r-full);
-  border: 1px solid rgba(220, 216, 207, 0.05);
-  box-shadow: 0 8px 32px 0 rgba(220, 216, 207, 0.04);
-  filter: blur(1px);
-  animation: drift 14s ease-in-out infinite;
-}
-.shape::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(circle at 50% 50%, rgba(220, 216, 207, 0.07), transparent 70%);
-}
-@keyframes drift {
-  0%, 100% { transform: translateY(0) rotate(var(--tilt)); }
-  50% { transform: translateY(15px) rotate(var(--tilt)); }
 }
 
 .inner {
@@ -71,7 +40,6 @@
   line-height: 0.99;
   letter-spacing: -0.028em;
 }
-/* the light falls across the words, so the type is lit rather than coloured */
 .title span,
 .title em {
   display: block;
@@ -89,6 +57,4 @@
 @media (max-width: 720px) {
   .inner { padding: calc(var(--nav-h) + var(--s6)) var(--s4) var(--s10); }
   .card { margin-top: var(--s10); }
-  .shape { display: none; }
-  .shape:nth-child(-n + 2) { display: block; }
 }
