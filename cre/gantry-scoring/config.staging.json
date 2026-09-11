@@ -1,6 +1,6 @@
 {
   "schedule": "0 */15 * * * *",
-  "features_url": "https://api.studio.thegraph.com/query/1760064/gantry-mainnet/version/latest",
+  "features_url": "https://<your-deployment>/api/features",
   "secrets_ids": {
     "scoring_params_id": "gantry_scoring_params",
     "features_key_id": "gantry_features_key"

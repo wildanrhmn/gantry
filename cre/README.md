@@ -29,6 +29,12 @@ cre login              # or export CRE_API_KEY=...
 cre workflow simulate ./gantry-scoring --target local-simulation --engine-logs
 ```
 
+## Set features_url before deploying
+
+`config.staging.json` carries `https://<your-deployment>/api/features` on purpose. Put the
+real host in once the web app is deployed; the route already exists at
+`web/app/api/features/route.ts`.
+
 ## Where features come from
 
 `features_url` is not the subgraph. The subgraph indexes what the pool *did* - tolls
