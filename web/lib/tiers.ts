@@ -27,5 +27,5 @@ export interface Lookup {
   sharedInfrastructure: boolean;
   observations: Observation[];
   poolSwaps: number | null;
-  source: { fromBlock: number; toBlock: number; scannedAt: string };
+  source: { fromBlock: number; toBlock: number; swaps: number; live: boolean };
 }

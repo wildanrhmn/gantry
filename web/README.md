@@ -7,14 +7,16 @@ npm install
 npm run dev
 ```
 
-`data/mainnet-features.json` is a real scan of Ethereum mainnet blocks 25,940,000-25,944,999
-via Substreams: 66,149 swaps, 129 sandwiches, 475 addresses. Regenerate it with:
+Every number is a GraphQL query made when the request arrives. Nothing is read from a
+checked-in dataset.
 
-```bash
-cd ../substreams && substreams run substreams.yaml map_swaps \
-  -e mainnet.eth.streamingfast.io:443 --start-block 25940000 --stop-block +5000 -o json > scan.json
-cd ../scorer && node src/build-dataset.ts scan.json ../web/data/mainnet-features.json
-```
+| What | Where from | Override |
+| --- | --- | --- |
+| Address behaviour, leaderboard, scan totals | `indexer-mainnet` subgraph | `NEXT_PUBLIC_GANTRY_MAINNET_SUBGRAPH` |
+| Tolls charged, tier changes, venue totals | `indexer` subgraph on Sepolia | `NEXT_PUBLIC_GANTRY_SUBGRAPH` |
 
-The live feed and venue totals come from the subgraph, set with
-`NEXT_PUBLIC_GANTRY_SUBGRAPH`. It defaults to the deployed one.
+The one exception is `data/failed-attempts.json`: reverted transactions emit no logs, so no
+subgraph can produce them. That column comes from the Substreams `map_attempts` module and is
+labelled as such in the readout.
+
+`/api/features` merges the two and is what the CRE workflow reads inside its enclave.

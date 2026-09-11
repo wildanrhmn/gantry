@@ -5,8 +5,8 @@ import { tier as tierOf } from "@/lib/tiers";
 import table from "@/components/Table.module.css";
 import styles from "./home.module.css";
 
-export default function Home() {
-  const worst = worstOffenders(8);
+export default async function Home() {
+  const [worst, scan] = await Promise.all([worstOffenders(8), scanWindow()]);
 
   return (
     <main className="page">
@@ -19,10 +19,10 @@ export default function Home() {
         <p className="eyebrow">Already found</p>
         <h2 className="display h3">Addresses the scan priced up</h2>
         <p className="lede">
-          From {scanWindow.swaps.toLocaleString()} swaps across{" "}
-          {(scanWindow.toBlock - scanWindow.fromBlock).toLocaleString()} blocks of Ethereum
-          mainnet. {scanWindow.sandwiches.toLocaleString()} sandwich-shaped sequences, attributed
-          only where one originator was behind both legs.
+          From {scan.swaps.toLocaleString()} swaps across{" "}
+          {(scan.toBlock - scan.fromBlock).toLocaleString()} blocks of Ethereum mainnet, read
+          live at block {scan.toBlock.toLocaleString()}. {scan.sandwiches.toLocaleString()}{" "}
+          sandwich-shaped sequences, attributed only where one originator was behind both legs.
         </p>
         <table className={table.table}>
           <thead>
@@ -34,10 +34,10 @@ export default function Home() {
           </thead>
           <tbody>
             {worst.map((r) => (
-              <tr key={r.address}>
+              <tr key={r.id}>
                 <td>
-                  <Link href={`/address/${r.address}`} className={table.link}>{r.address}</Link>
-                  <span className={table.note}>{r.originators} originator{r.originators === 1 ? "" : "s"}</span>
+                  <Link href={`/address/${r.id}`} className={table.link}>{r.id}</Link>
+                  <span className={table.note}>{r.originators} originator{r.originators === "1" ? "" : "s"}</span>
                 </td>
                 <td>
                   <span className={`${table.badge} ${table[`t${r.tier}`]}`}>{tierOf(r.tier).name}</span>

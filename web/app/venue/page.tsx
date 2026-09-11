@@ -11,7 +11,7 @@ export const metadata = { title: "Venue — Gantry" };
 export default async function VenuePage() {
   const data = await venue();
   const v = data?.venues?.[0];
-  const shared = sharedInfrastructure(8);
+  const [shared, scan] = await Promise.all([sharedInfrastructure(8), scanWindow()]);
 
   return (
     <main className="page">
@@ -69,17 +69,17 @@ export default async function VenuePage() {
           </thead>
           <tbody>
             {shared.map((r) => (
-              <tr key={r.address}>
-                <td><Link href={`/address/${r.address}`} className={table.link}>{r.address}</Link></td>
-                <td className={table.right}>{r.originators.toLocaleString()}</td>
-                <td className={table.right}>{r.swaps.toLocaleString()}</td>
+              <tr key={r.id}>
+                <td><Link href={`/address/${r.id}`} className={table.link}>{r.id}</Link></td>
+                <td className={table.right}>{Number(r.originators).toLocaleString()}</td>
+                <td className={table.right}>{Number(r.swaps).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <p className="lede" style={{ marginTop: "var(--s5)", fontSize: 13 }}>
-          Measured over blocks {scanWindow.fromBlock.toLocaleString()}–
-          {scanWindow.toBlock.toLocaleString()} on Ethereum mainnet.
+          Measured over blocks {scan.fromBlock.toLocaleString()}–{scan.toBlock.toLocaleString()}{" "}
+          on Ethereum mainnet.
         </p>
       </section>
     </main>

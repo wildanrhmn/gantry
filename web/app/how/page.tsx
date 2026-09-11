@@ -3,8 +3,11 @@ import { scanWindow } from "@/lib/lookup";
 import styles from "./how.module.css";
 
 export const metadata = { title: "How it works — Gantry" };
+export const revalidate = 30;
 
-export default function HowPage() {
+export default async function HowPage() {
+  const scan = await scanWindow();
+
   return (
     <main className="page">
       <section className="section">
@@ -58,8 +61,8 @@ export default function HowPage() {
           <Row label="Pool manager" value={ADDRESSES.poolManager} note="Uniswap canonical" />
         </dl>
         <p className="lede" style={{ marginTop: "var(--s6)", fontSize: 13 }}>
-          Behaviour read from {scanWindow.swaps.toLocaleString()} mainnet swaps, blocks{" "}
-          {scanWindow.fromBlock.toLocaleString()}–{scanWindow.toBlock.toLocaleString()}. Tiers
+          Behaviour read from {scan.swaps.toLocaleString()} mainnet swaps, blocks{" "}
+          {scan.fromBlock.toLocaleString()}–{scan.toBlock.toLocaleString()}, indexed live. Tiers
           enforced on Sepolia.
         </p>
       </section>

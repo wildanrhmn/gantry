@@ -10,7 +10,8 @@ export function EvidenceTable({ result }: { result: Lookup }) {
       <h2 className="display h3" style={{ marginTop: "var(--s12)" }}>What was measured</h2>
       <p className="lede">
         Observations, not conclusions. Blocks {result.source.fromBlock.toLocaleString()}–
-        {result.source.toBlock.toLocaleString()} on Ethereum mainnet.
+        {result.source.toBlock.toLocaleString()} on Ethereum mainnet, read from the subgraph
+        at request time.
       </p>
       <table className={styles.table}>
         <thead>
