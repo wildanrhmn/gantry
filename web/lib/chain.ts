@@ -4,19 +4,29 @@ import { sepolia } from "viem/chains";
 export const CHAIN = sepolia;
 
 export const ADDRESSES = {
-  gantry: "0xa3D2A9ee28198496D5DF469A8FF149aD2d780080",
+  gantry: "0x4e6D007c91aB5491c1De9E491f18fbE18ACC8080",
   oracle: "0x846d3eF24c3c6e079Bd95cFeACC08B21427C9132",
   receiver: "0x351278Ef6FF1325c69127255936e5E7d0B47A1A4",
   poolManager: "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
-  router: "0x867a6f9CAcC6d7341Fad9d0d5Fac193dF684C0a9",
-  token0: "0x814b446F9fcAeDF9521BCcF987b4B7584697E3dA",
-  token1: "0xea8c0f41dd721804a346bA6a8F037eF2edd95fFD",
+  router: "0x88decb029a808357402044588f2904504CaaFe39",
+  token0: "0x22b7Dd77e2Aad27cf31fAeF95fd00fAE1d7B9C39",
+  token1: "0xcfF6d672115c9aBEb3196a9BDB047aeb185Aa9e2",
 } as const satisfies Record<string, Address>;
 
 export const TOKENS = {
-  [ADDRESSES.token0]: { symbol: "gUSD", name: "Gantry USD" },
-  [ADDRESSES.token1]: { symbol: "gETH", name: "Gantry ETH" },
+  [ADDRESSES.token0]: { symbol: "gETH", name: "Gantry ETH" },
+  [ADDRESSES.token1]: { symbol: "gUSD", name: "Gantry USD" },
 } as const;
+
+/**
+ * v4 sorts a pool's currencies by address, so which of them is token0 changes with
+ * every deployment. Name the side being sold instead of assuming a position.
+ */
+export const SELL = ADDRESSES.token1;
+export const BUY = ADDRESSES.token0;
+export const SELL_IS_TOKEN0 = (SELL as string) === (ADDRESSES.token0 as string);
+export const SELL_SYMBOL = TOKENS[SELL].symbol;
+export const BUY_SYMBOL = TOKENS[BUY].symbol;
 
 /** Dynamic-fee pools are opened with this flag; the hook overrides the fee per swap. */
 export const DYNAMIC_FEE_FLAG = 0x800000;
@@ -75,6 +85,7 @@ export const routerAbi = [
 
 export const gantryAbi = [
   { type: "function", name: "tierFee", stateMutability: "view", inputs: [{ type: "uint256" }], outputs: [{ type: "uint24" }] },
+  { type: "function", name: "nonces", stateMutability: "view", inputs: [{ type: "address" }], outputs: [{ type: "uint256" }] },
   {
     type: "event", name: "Tolled",
     inputs: [
@@ -100,9 +111,14 @@ export function poolId(): Hex {
 }
 
 /** hookData the hook decodes: (trader, deadline, signature). */
-export function encodeAttestation(trader: Address, deadline: bigint, signature: Hex): Hex {
+export function encodeAttestation(
+  trader: Address,
+  nonce: bigint,
+  deadline: bigint,
+  signature: Hex,
+): Hex {
   return encodeAbiParameters(
-    [{ type: "address" }, { type: "uint256" }, { type: "bytes" }],
-    [trader, deadline, signature],
+    [{ type: "address" }, { type: "uint256" }, { type: "uint256" }, { type: "bytes" }],
+    [trader, nonce, deadline, signature],
   );
 }

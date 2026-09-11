@@ -1,6 +1,6 @@
 const ENDPOINT =
   process.env.NEXT_PUBLIC_GANTRY_SUBGRAPH ??
-  "https://api.studio.thegraph.com/query/1760064/gantry/0.0.2";
+  "https://api.studio.thegraph.com/query/1760064/gantry/v0.0.3";
 
 export async function querySubgraph<T>(
   document: string,

@@ -12,6 +12,11 @@ import {
   ADDRESSES,
   CHAIN,
   MIN_PRICE_LIMIT,
+  MAX_PRICE_LIMIT,
+  SELL,
+  SELL_IS_TOKEN0,
+  SELL_SYMBOL,
+  BUY_SYMBOL,
   POOL_KEY,
   erc20Abi,
   gantryAbi,
@@ -48,10 +53,10 @@ export function Swap() {
   const refresh = useCallback(async (who: Address) => {
     const [bal, allow] = await Promise.all([
       publicClient.readContract({
-        address: ADDRESSES.token0, abi: erc20Abi, functionName: "balanceOf", args: [who],
+        address: SELL, abi: erc20Abi, functionName: "balanceOf", args: [who],
       }),
       publicClient.readContract({
-        address: ADDRESSES.token0, abi: erc20Abi, functionName: "allowance",
+        address: SELL, abi: erc20Abi, functionName: "allowance",
         args: [who, ADDRESSES.router],
       }),
     ]);
@@ -81,7 +86,7 @@ export function Swap() {
       if (!account) return;
       const client = wallet();
       const hash = await client.writeContract({
-        account, address: ADDRESSES.token0, abi: erc20Abi, functionName: "mint",
+        account, address: SELL, abi: erc20Abi, functionName: "mint",
         args: [account, parseUnits("1000", 18)], chain: CHAIN,
       });
       await publicClient.waitForTransactionReceipt({ hash });
@@ -93,7 +98,7 @@ export function Swap() {
       if (!account) return;
       const client = wallet();
       const hash = await client.writeContract({
-        account, address: ADDRESSES.token0, abi: erc20Abi, functionName: "approve",
+        account, address: SELL, abi: erc20Abi, functionName: "approve",
         args: [ADDRESSES.router, MAX_UINT], chain: CHAIN,
       });
       await publicClient.waitForTransactionReceipt({ hash });
@@ -106,20 +111,30 @@ export function Swap() {
       if (!account) return;
       const client = wallet();
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
+      // The hook only accepts the next number this trader has not spent, so read it fresh.
+      const nonce = (await publicClient.readContract({
+        address: ADDRESSES.gantry,
+        abi: gantryAbi,
+        functionName: "nonces",
+        args: [account],
+      })) as bigint;
+
       const signature = await client.signTypedData({
         account,
         domain: { name: "Gantry", version: "1", chainId: CHAIN.id, verifyingContract: ADDRESSES.gantry },
         types: {
           Attestation: [
             { name: "trader", type: "address" },
+            { name: "sender", type: "address" },
             { name: "poolId", type: "bytes32" },
+            { name: "nonce", type: "uint256" },
             { name: "deadline", type: "uint256" },
           ],
         },
         primaryType: "Attestation",
-        message: { trader: account, poolId: poolId(), deadline },
+        message: { trader: account, sender: ADDRESSES.router, poolId: poolId(), nonce, deadline },
       });
-      setAttestation(encodeAttestation(account, deadline, signature));
+      setAttestation(encodeAttestation(account, nonce, deadline, signature));
     });
 
   const swap = () =>
@@ -133,13 +148,18 @@ export function Swap() {
         functionName: "swap",
         args: [
           POOL_KEY,
-          { zeroForOne: true, amountSpecified: -parseUnits(amount || "1", 18), sqrtPriceLimitX96: MIN_PRICE_LIMIT },
+          {
+            zeroForOne: SELL_IS_TOKEN0,
+            amountSpecified: -parseUnits(amount || "1", 18),
+            sqrtPriceLimitX96: SELL_IS_TOKEN0 ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT,
+          },
           { takeClaims: false, settleUsingBurn: false },
           attestation ?? "0x",
         ],
         chain: CHAIN,
       });
       const rec = await publicClient.waitForTransactionReceipt({ hash });
+      setAttestation(null);
       const tolled = rec.logs
         .filter((l) => l.address.toLowerCase() === ADDRESSES.gantry.toLowerCase())
         .map((l) => {
@@ -167,26 +187,26 @@ export function Swap() {
     <div className={styles.wrap}>
       <div className={styles.steps}>
         <Step n={1} done={Boolean(account)} title="Connect a wallet"
-          sub={account ?? "Sepolia — nothing here costs real money"}
+          sub={account ?? "Sepolia | nothing here costs real money"}
           action={account ? null : { label: connecting ? "Connecting" : "Connect", onClick: connect, primary: true }} />
 
         <Step n={2} done={!needsTokens} title="Get test tokens"
-          sub={!account ? "1,000 gUSD, free" : balance === null ? "reading" : `${Number(formatUnits(balance, 18)).toLocaleString()} gUSD`}
-          action={account && needsTokens ? { label: busy === "mint" ? "Minting" : "Mint 1,000 gUSD", onClick: getTokens, primary: true } : null} />
+          sub={!account ? `1,000 ${SELL_SYMBOL}, free` : balance === null ? "reading" : `${Number(formatUnits(balance, 18)).toLocaleString()} ${SELL_SYMBOL}`}
+          action={account && needsTokens ? { label: busy === "mint" ? "Minting" : `Mint 1,000 ${SELL_SYMBOL}`, onClick: getTokens, primary: true } : null} />
 
         <Step n={3} done={!needsApproval && !needsTokens} title="Let the router move them"
           sub={!account ? "one approval, once" : needsApproval ? "one approval, once" : "approved"}
           action={account && needsApproval ? { label: busy === "approve" ? "Approving" : "Approve", onClick: approve, primary: true } : null} />
 
         <Step n={4} done={Boolean(attestation)} title="Be priced as yourself"
-          sub={attestation ? "signed — the hook will read your address" : "optional: without it you are priced as the router"}
+          sub={attestation ? "signed | the hook will read your address" : "optional: without it you are priced as the router"}
           action={account ? { label: busy === "sign" ? "Signing" : attestation ? "Sign again" : "Sign", onClick: sign } : null} />
       </div>
 
       <div className={styles.amount}>
         <input className={styles.amountInput} value={amount} onChange={(e) => setAmount(e.target.value)}
-          inputMode="decimal" aria-label="Amount of gUSD to swap" />
-        <span className={styles.sub}>gUSD → gETH</span>
+          inputMode="decimal" aria-label={`Amount of ${SELL_SYMBOL} to swap`} />
+        <span className={styles.sub}>{SELL_SYMBOL} → {BUY_SYMBOL}</span>
         <button className={styles.act} data-primary="true" onClick={swap}
           disabled={!account || needsTokens || needsApproval || busy !== null}>
           {busy === "swap" ? "Swapping" : "Swap"}
