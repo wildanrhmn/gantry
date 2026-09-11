@@ -1,21 +1,45 @@
 .stage {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 462px;
   margin: 0 auto;
 }
+
+/* the card is framed like a shot, and the frame takes the colour of the verdict */
+.frame {
+  position: relative;
+  padding: 21px;
+  border-radius: 26px;
+  border: 1px solid color-mix(in srgb, var(--tier-colour) 20%, transparent);
+  background: rgba(255, 255, 255, 0.012);
+  box-shadow: 0 0 70px -42px var(--tier-colour), inset 0 0 60px -46px var(--tier-colour);
+  transition: border-color 600ms ease, box-shadow 600ms ease;
+}
+.corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--tier-colour);
+  filter: drop-shadow(0 0 5px var(--tier-colour));
+  transition: border-color 600ms ease, filter 600ms ease;
+  pointer-events: none;
+}
+.corner[data-c="tl"] { top: -1px; left: -1px; border-right: 0; border-bottom: 0; border-radius: 26px 0 0 0; }
+.corner[data-c="tr"] { top: -1px; right: -1px; border-left: 0; border-bottom: 0; border-radius: 0 26px 0 0; }
+.corner[data-c="bl"] { bottom: -1px; left: -1px; border-right: 0; border-top: 0; border-radius: 0 0 0 26px; }
+.corner[data-c="br"] { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-radius: 0 0 26px 0; }
 
 /* the light the card casts, tinted by whatever verdict is showing */
 .cast {
   position: absolute;
   left: 50%;
-  bottom: -34px;
-  width: 86%;
-  height: 130px;
+  bottom: -40px;
+  width: 80%;
+  height: 140px;
   transform: translateX(-50%);
   border-radius: 50%;
   background: var(--cast-colour, var(--brand-medium));
-  opacity: 0.32;
+  opacity: 0.2;
   filter: blur(44px);
   transition: background 600ms ease;
   pointer-events: none;
@@ -25,8 +49,8 @@
   position: relative;
   padding: 18px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(10, 10, 24, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(13, 13, 26, 0.72);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   box-shadow:
@@ -186,5 +210,7 @@
 
 @media (max-width: 560px) {
   .stage { max-width: 100%; }
+  .frame { padding: 14px; border-radius: 22px; }
+  .corner { width: 24px; height: 24px; }
   .amount { font-size: 19px; }
 }

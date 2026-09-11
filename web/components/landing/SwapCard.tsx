@@ -13,13 +13,14 @@ const RATE = 4000;
 const HOLD = 3.4;
 
 const FEE_BPS = [5, 30, 60, 100];
-const CAST = ["var(--success)", "var(--brand-medium)", "var(--warning)", "var(--danger)"];
+const TINT = ["#5cffcb", "#7b80ee", "#ffaf62", "#ff2e58"];
 
 const plate = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 export function SwapCard({ cars }: { cars: LaneCar[] }) {
   const [i, setI] = useState(0);
   const card = useRef<HTMLDivElement>(null);
+  const frame = useRef<HTMLDivElement>(null);
   const out = useRef<HTMLSpanElement>(null);
   const feeRef = useRef<HTMLSpanElement>(null);
   const tick = useRef<HTMLSpanElement>(null);
@@ -60,8 +61,17 @@ export function SwapCard({ cars }: { cars: LaneCar[] }) {
         if (feeRef.current) feeRef.current.textContent = `${proxy.fee.toFixed(2)}%`;
       },
     });
+    const flare = frame.current
+      ? gsap.fromTo(
+          frame.current,
+          { filter: "brightness(1.9)" },
+          { filter: "brightness(1)", duration: 0.9, ease: "power2.out" },
+        )
+      : null;
+
     return () => {
       tween.kill();
+      flare?.kill();
     };
   }, [received, tier]);
 
@@ -85,8 +95,17 @@ export function SwapCard({ cars }: { cars: LaneCar[] }) {
   }, []);
 
   return (
-    <div className={styles.stage} style={{ perspective: "1100px" }}>
-      <span className={styles.cast} style={{ ["--cast-colour" as string]: CAST[tier] }} />
+    <div
+      className={styles.stage}
+      style={{ perspective: "1100px", ["--tier-colour" as string]: TINT[tier] }}
+    >
+      <span className={styles.cast} style={{ ["--cast-colour" as string]: TINT[tier] }} />
+
+      <div className={styles.frame} ref={frame}>
+        <span className={styles.corner} data-c="tl" />
+        <span className={styles.corner} data-c="tr" />
+        <span className={styles.corner} data-c="bl" />
+        <span className={styles.corner} data-c="br" />
 
       <div className={styles.card} ref={card}>
         <span className={styles.track}><span className={styles.tick} ref={tick} /></span>
@@ -138,6 +157,7 @@ export function SwapCard({ cars }: { cars: LaneCar[] }) {
         <Link href={`/address/${current.address}`} className={styles.go}>
           Why does it pay this?
         </Link>
+      </div>
       </div>
     </div>
   );

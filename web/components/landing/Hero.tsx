@@ -6,6 +6,17 @@ import type { LaneCar } from "@/components/landing/ScanLane";
 import { gsap, ScrollTrigger, SplitText, reducedMotion } from "@/lib/motion";
 import styles from "./Hero.module.css";
 
+/** left, top, width, height — scattered so the backdrop reads as depth, not a pattern. */
+const BLOCKS = [
+  ["6%", "14%", "190px", "130px"],
+  ["19%", "58%", "150px", "210px"],
+  ["68%", "9%", "230px", "150px"],
+  ["83%", "52%", "170px", "190px"],
+  ["44%", "76%", "270px", "130px"],
+  ["58%", "28%", "130px", "130px"],
+  ["11%", "86%", "210px", "110px"],
+] as const;
+
 export function Hero({ cars }: { cars: LaneCar[] }) {
   const root = useRef<HTMLElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
@@ -22,7 +33,11 @@ export function Hero({ cars }: { cars: LaneCar[] }) {
       document.fonts.ready.then(() => {
         if (!title.current) return;
         const split = SplitText.create(title.current, { type: "lines,words", mask: "lines" });
-        intro.from(split.words, { yPercent: 116, duration: 1, stagger: 0.045 }, 0);
+        intro.from(
+          split.words,
+          { yPercent: 116, duration: 1, stagger: 0.045, onComplete: () => split.revert() },
+          0,
+        );
       });
 
       intro.from("[data-reveal='card']", { opacity: 0, y: 46, scale: 0.97, duration: 1.2 }, 0.34);
@@ -40,13 +55,18 @@ export function Hero({ cars }: { cars: LaneCar[] }) {
 
   return (
     <section className={styles.hero} ref={root}>
-      <div className={styles.grid} />
+      <div className={styles.blocks}>
+        {BLOCKS.map((b, i) => (
+          <span key={i} style={{ left: b[0], top: b[1], width: b[2], height: b[3] }} />
+        ))}
+      </div>
       <div className={styles.glow} />
+      <div className={styles.vignette} />
 
       <div className={styles.inner} data-parallax>
         <h1 className={styles.title} ref={title}>
           <span>Every swap gets read</span>
-          <span>as it passes</span>
+          <em>as it passes</em>
         </h1>
 
         <div className={styles.card} data-reveal="card">

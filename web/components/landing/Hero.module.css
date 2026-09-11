@@ -12,22 +12,25 @@
   inset: -14% -20% auto;
   height: 84%;
   background:
-    radial-gradient(ellipse 36% 44% at 24% 16%, #4b3ce055, transparent 68%),
-    radial-gradient(ellipse 32% 38% at 76% 8%, #1f6fb44d, transparent 66%),
-    radial-gradient(ellipse 30% 34% at 50% 46%, #7a4bd02e, transparent 70%);
-  filter: blur(40px);
+    radial-gradient(ellipse 34% 42% at 22% 14%, #4b3ce03d, transparent 68%),
+    radial-gradient(ellipse 30% 36% at 78% 8%, #1f6fb436, transparent 66%);
+  filter: blur(44px);
   pointer-events: none;
 }
-.grid {
+/* out-of-focus slabs, so the dark has depth instead of being flat black */
+.blocks { position: absolute; inset: 0; pointer-events: none; }
+.blocks span {
+  position: absolute;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.026);
+  filter: blur(26px);
+}
+
+/* pulls the eye to the middle and stops the edges from feeling open */
+.vignette {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(90deg, var(--asphalt-line) 1px, transparent 1px),
-    linear-gradient(0deg, var(--asphalt-line) 1px, transparent 1px);
-  background-size: 76px 76px;
-  opacity: 0.14;
-  -webkit-mask-image: radial-gradient(ellipse 66% 56% at 50% 42%, #000, transparent 74%);
-  mask-image: radial-gradient(ellipse 66% 56% at 50% 42%, #000, transparent 74%);
+  background: radial-gradient(ellipse 74% 64% at 50% 46%, transparent 38%, rgba(0, 0, 0, 0.72) 100%);
   pointer-events: none;
 }
 
@@ -49,11 +52,20 @@
   font-family: var(--font-display), sans-serif;
   font-variation-settings: "wdth" 108;
   font-weight: 800;
-  font-size: clamp(38px, 6.4vw, 76px);
+  font-size: clamp(34px, 6.4vw, 76px);
   line-height: 0.96;
   letter-spacing: -0.033em;
 }
-.title span { display: block; }
+/* balance keeps a narrow screen from orphaning the last word of a line */
+.title span { display: block; text-wrap: balance; }
+/* the second line is the payload, so it carries the signage colour */
+.title em {
+  display: block;
+  text-wrap: balance;
+  font-style: normal;
+  color: var(--led);
+  text-shadow: 0 0 46px var(--led-glow);
+}
 
 
 /* the card is its own object, so it stops inheriting the centred text above it */
