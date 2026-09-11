@@ -43,6 +43,9 @@
 
 html, body { padding: 0; margin: 0; }
 
+/* the nav is sticky, so anchored scrolling has to clear it */
+html { scroll-padding-top: 88px; }
+
 body {
   background: var(--page);
   color: var(--fg);
@@ -89,3 +92,10 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+.h3 { font-size: clamp(26px, 4vw, 36px); font-weight: 700; }
+.lede { color: var(--fg-muted); max-width: 62ch; margin: var(--s3) 0 0; }
+.page { max-width: 1120px; margin: 0 auto; padding: var(--s12) var(--s6) var(--s32); }
+.section { margin-top: var(--s24); border-top: 1px solid var(--border); padding-top: var(--s8); scroll-margin-top: 88px; }
+.section:first-of-type { margin-top: 0; border-top: 0; padding-top: 0; }
+@media (max-width: 560px) { .page { padding: var(--s8) var(--s4) var(--s24); } }

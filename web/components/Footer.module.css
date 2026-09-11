@@ -1,0 +1,12 @@
+.foot { border-top: 1px solid var(--border); margin-top: var(--s24); }
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--s6);
+  font-size: 13px;
+  color: var(--fg-dim);
+  font-family: var(--font-mono), monospace;
+}
+.inner a { color: var(--brand); text-decoration: none; word-break: break-all; }
+.inner a:hover { text-decoration: underline; }
+.line { font-family: var(--font-body), sans-serif; margin: var(--s2) 0 0; max-width: 72ch; }

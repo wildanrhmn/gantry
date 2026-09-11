@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Nav } from "@/components/Nav";
+import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Gantry — every swap gets read as it passes",
@@ -18,7 +20,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link rel="stylesheet" href={FONTS} />
       </head>
-      <body>{children}</body>
+      <body>
+        <Nav />
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }
