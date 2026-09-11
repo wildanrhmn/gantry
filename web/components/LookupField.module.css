@@ -8,9 +8,9 @@
   min-width: 260px;
   font-family: var(--font-mono), monospace;
   color: var(--fg);
-  background: var(--control-fill);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-input);
 }
 .inputBig { font-size: clamp(15px, 2.2vw, 20px); padding: var(--s5); }
 .input { font-size: 14px; padding: var(--s3) var(--s4); }
@@ -20,15 +20,18 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--fg);
-  background: var(--control-fill);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--r-input);
   padding: 0 var(--s6);
   cursor: pointer;
   transition: background 80ms ease;
 }
-.go:hover { background: var(--hover-fill); }
+.go:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
 .hint { margin: var(--s4) 0 0; font-size: 14px; color: var(--fg-dim); }
+[data-centred] .hint { margin-top: var(--s3); font-size: 12px; }
+[data-centred] .input { text-align: center; }
+[data-centred] .go { padding: 0 var(--s5); font-size: 14px; }
 .hint button {
   font-family: var(--font-mono), monospace;
   font-size: 13px;

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Hero } from "@/components/landing/Hero";
+import { ScanBand } from "@/components/landing/ScanBand";
 import { laneSample } from "@/lib/mainnet";
 import { scanWindow, worstOffenders } from "@/lib/lookup";
 import { tier as tierOf } from "@/lib/tiers";
@@ -18,7 +19,8 @@ export default async function Home() {
 
   return (
     <>
-      <Hero scan={scan} cars={cars} />
+      <Hero block={scan.toBlock} live={scan.live} cars={cars} />
+      <ScanBand stats={scan} cars={cars} />
 
       <main className="page">
         <section className="section">

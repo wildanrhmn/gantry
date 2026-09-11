@@ -1,0 +1,190 @@
+.stage {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* the light the card casts, tinted by whatever verdict is showing */
+.cast {
+  position: absolute;
+  left: 50%;
+  bottom: -34px;
+  width: 86%;
+  height: 130px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--cast-colour, var(--brand-medium));
+  opacity: 0.32;
+  filter: blur(44px);
+  transition: background 600ms ease;
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 24, 0.62);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 40px 80px -34px rgba(0, 0, 0, 0.95),
+    0 8px 24px -12px rgba(0, 0, 0, 0.7);
+  transform-style: preserve-3d;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.title { font-size: 13px; font-weight: 600; color: var(--fg); }
+.venue {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+.leg {
+  padding: 13px var(--s4);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.025);
+}
+.legLabel {
+  display: block;
+  font-size: 11px;
+  color: var(--fg-dim);
+  margin-bottom: 6px;
+}
+.legRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+.amount {
+  font-family: var(--font-mono), monospace;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.token {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+/* the hinge between the two legs, drawn over the gap like a real swap widget */
+.hinge {
+  position: relative;
+  height: 8px;
+  display: flex;
+  justify-content: center;
+}
+.hinge span {
+  position: absolute;
+  top: -10px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0b0b18;
+  color: var(--fg-muted);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.pricing {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: grid;
+  gap: 9px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+.key { font-size: 12px; color: var(--fg-dim); }
+.val {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  color: var(--fg);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: var(--r-full);
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.lamp { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.chip[data-tier="0"] { color: var(--success); background: var(--success-soft); }
+.chip[data-tier="1"] { color: var(--brand-light); background: var(--brand-softer); }
+.chip[data-tier="2"] { color: var(--warning); background: var(--warning-soft); }
+.chip[data-tier="3"] { color: var(--danger); background: var(--danger-soft); }
+
+.fee { font-weight: 600; }
+.fee[data-tier="0"] { color: var(--success); }
+.fee[data-tier="2"] { color: var(--warning); }
+.fee[data-tier="3"] { color: var(--danger); }
+
+.go {
+  margin-top: var(--s4);
+  width: 100%;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fg);
+  font-family: var(--font-body), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  display: grid;
+  place-items: center;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+.go:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+
+/* how long until the card shows the next address */
+.track {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 0;
+  height: 1px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+.tick {
+  display: block;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+@media (max-width: 560px) {
+  .stage { max-width: 100%; }
+  .amount { font-size: 19px; }
+}

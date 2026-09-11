@@ -40,10 +40,11 @@
   --font-mono: "IBM Plex Mono";
 
   --r-md: 0px;
+  --r-input: 12px;
   --r-full: 9999px;
 
   --s1: 4px;  --s2: 8px;   --s3: 12px;  --s4: 16px;  --s5: 20px;
-  --s6: 24px; --s8: 32px;  --s10: 40px; --s12: 48px; --s16: 64px;
+  --s6: 24px; --s7: 28px; --s8: 32px;  --s10: 40px; --s12: 48px; --s16: 64px;
   --s20: 80px; --s24: 96px; --s32: 128px;
 
   --nav-h: 76px;
