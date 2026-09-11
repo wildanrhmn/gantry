@@ -77,6 +77,19 @@ Subgraph: `https://api.studio.thegraph.com/query/1760064/gantry/0.0.2`
 The hook address ends `0080` because v4 reads a hook's permissions out of its own address.
 The salt was mined until the low 14 bits equalled 128, the `BEFORE_SWAP` bit.
 
+### Where to look in the code
+
+| What | Where |
+| --- | --- |
+| The fee decision | [`Gantry.sol#L71-L81`](contracts/src/Gantry.sol#L71-L81) — `_beforeSwap` returns `fee \| OVERRIDE_FEE_FLAG` |
+| Hook permissions | [`Gantry.sol#L52`](contracts/src/Gantry.sol#L52) — `beforeSwap` only |
+| Router vs trader | [`Gantry.sol#L100-L118`](contracts/src/Gantry.sol#L100-L118) — `_resolvePayer`, and why an attestation exists |
+| Signable attestation | [`Gantry.sol#L86-L90`](contracts/src/Gantry.sol#L86-L90) — EIP-712 digest |
+| Fail open, never revert | [`Gantry.sol#L120-L127`](contracts/src/Gantry.sol#L120-L127) — a bad oracle cannot halt the pool |
+| Routers cannot be priced up | [`TierOracle.sol#L99-L104`](contracts/src/TierOracle.sol#L99-L104) — `_set` clamps shared addresses |
+
+Feedback on building against the v4 stack is in [FEEDBACK.md](FEEDBACK.md).
+
 ### One address, two prices
 
 The fee is decided in [`Gantry._beforeSwap`](contracts/src/Gantry.sol). These three tolls

@@ -1,6 +1,6 @@
 {
   "schedule": "0 */15 * * * *",
-  "features_url": "https://api.studio.thegraph.com/query/<id>/gantry/version/latest",
+  "features_url": "https://gantry-features.vercel.app/api/features",
   "secrets_ids": {
     "scoring_params_id": "gantry_scoring_params",
     "features_key_id": "gantry_features_key"
@@ -9,7 +9,7 @@
   "evms": [
     {
       "chain_selector_name": "ethereum-testnet-sepolia",
-      "receiver_address": "0x0000000000000000000000000000000000000000",
+      "receiver_address": "0x351278Ef6FF1325c69127255936e5E7d0B47A1A4",
       "gas_limit": "800000"
     }
   ]
