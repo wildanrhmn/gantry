@@ -59,10 +59,20 @@ contract GantryTest is Test, Deployers {
         IERC20Minimal(Currency.unwrap(currency1)).approve(address(caller), type(uint256).max);
     }
 
-    function _attestation(uint256 pk, uint256 deadline) private view returns (bytes memory) {
+    /// An attestation is only valid for one router, one number, once.
+    function _attestation(uint256 pk, address sender, uint256 nonce, uint256 deadline)
+        private
+        view
+        returns (bytes memory)
+    {
         address trader = vm.addr(pk);
-        (uint8 v, bytes32 r, bytes32 sVal) = vm.sign(pk, gantry.attestationDigest(trader, key, deadline));
-        return abi.encode(trader, deadline, abi.encodePacked(r, sVal, v));
+        (uint8 v, bytes32 r, bytes32 sVal) =
+            vm.sign(pk, gantry.attestationDigest(trader, sender, key, nonce, deadline));
+        return abi.encode(trader, nonce, deadline, abi.encodePacked(r, sVal, v));
+    }
+
+    function _attestation(uint256 pk, address sender) private view returns (bytes memory) {
+        return _attestation(pk, sender, gantry.nonces(vm.addr(pk)), block.timestamp + 1 hours);
     }
 
     function _swapVia(PoolSwapTest caller) private returns (uint256 received) {
@@ -136,7 +146,7 @@ contract GantryTest is Test, Deployers {
         oracle.setTier(vm.addr(pk), oracle.TIER_CLEAN());
 
         uint256 unattested = _swapVia(cleanCaller);
-        uint256 attested = _swapVia(cleanCaller, _attestation(pk, block.timestamp + 1 hours));
+        uint256 attested = _swapVia(cleanCaller, _attestation(pk, address(cleanCaller)));
 
         assertGt(attested, unattested, "attested clean trader should pay less than an unknown router");
     }
@@ -144,7 +154,7 @@ contract GantryTest is Test, Deployers {
     function test_expiredAttestationFallsBackToCaller() public {
         uint256 pk = 0xA11CE;
         oracle.setTier(vm.addr(pk), oracle.TIER_CLEAN());
-        bytes memory att = _attestation(pk, block.timestamp + 1 hours);
+        bytes memory att = _attestation(pk, address(cleanCaller));
 
         vm.warp(block.timestamp + 2 hours);
 
@@ -161,12 +171,60 @@ contract GantryTest is Test, Deployers {
         oracle.setTier(victim, oracle.TIER_CLEAN());
 
         uint256 deadline = block.timestamp + 1 hours;
-        (uint8 v, bytes32 r, bytes32 sVal) = vm.sign(attackerPk, gantry.attestationDigest(victim, key, deadline));
-        bytes memory forged = abi.encode(victim, deadline, abi.encodePacked(r, sVal, v));
+        (uint8 v, bytes32 r, bytes32 sVal) =
+            vm.sign(attackerPk, gantry.attestationDigest(victim, address(cleanCaller), key, 0, deadline));
+        bytes memory forged = abi.encode(victim, uint256(0), deadline, abi.encodePacked(r, sVal, v));
 
         uint256 baseline = _swapVia(cleanCaller);
         uint256 forgedOut = _swapVia(cleanCaller, forged);
         assertApproxEqRel(forgedOut, baseline, 0.01e18, "forged attestation must not grant the clean tier");
+    }
+
+    /// A signature is spent when it is used. Presenting it again must buy nothing,
+    /// or an attestation becomes a bearer token a bot can buy off a clean address.
+    function test_attestationCannotBeReplayed() public {
+        uint256 pk = 0xA11CE;
+        address trader = vm.addr(pk);
+        oracle.setTier(trader, oracle.TIER_CLEAN());
+
+        bytes memory att = _attestation(pk, address(cleanCaller));
+
+        uint256 first = _swapVia(cleanCaller, att);
+        assertEq(gantry.nonces(trader), 1, "using an attestation must spend its number");
+
+        uint256 second = _swapVia(cleanCaller, att);
+        uint256 baseline = _swapVia(cleanCaller);
+        assertApproxEqRel(second, baseline, 0.01e18, "a replayed attestation must not grant the clean tier");
+        assertGt(first, second, "only the first presentation should have been priced as the trader");
+    }
+
+    /// Signed for one router, useless in another. Otherwise anyone holding the bytes
+    /// could route around the trader and still claim their tier.
+    function test_attestationIsBoundToTheRouterItWasSignedFor() public {
+        uint256 pk = 0xA11CE;
+        oracle.setTier(vm.addr(pk), oracle.TIER_CLEAN());
+
+        bytes memory att = _attestation(pk, address(cleanCaller));
+
+        PoolSwapTest otherRouter = _newCaller();
+        uint256 baseline = _swapVia(otherRouter);
+        uint256 elsewhere = _swapVia(otherRouter, att);
+        assertApproxEqRel(elsewhere, baseline, 0.01e18, "an attestation must not travel to another router");
+    }
+
+    /// Signing a number the trader has already spent must not work either.
+    function test_staleNonceIsIgnored() public {
+        uint256 pk = 0xA11CE;
+        address trader = vm.addr(pk);
+        oracle.setTier(trader, oracle.TIER_CLEAN());
+
+        _swapVia(cleanCaller, _attestation(pk, address(cleanCaller), 0, block.timestamp + 1 hours));
+        assertEq(gantry.nonces(trader), 1, "first attestation spends nonce zero");
+
+        uint256 baseline = _swapVia(cleanCaller);
+        uint256 stale =
+            _swapVia(cleanCaller, _attestation(pk, address(cleanCaller), 0, block.timestamp + 1 hours));
+        assertApproxEqRel(stale, baseline, 0.01e18, "a signature for a spent nonce must be ignored");
     }
 
     /// Malformed hook data must never be able to halt the pool.

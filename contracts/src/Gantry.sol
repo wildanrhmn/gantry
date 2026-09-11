@@ -30,13 +30,19 @@ contract Gantry is BaseHook, EIP712 {
 
     uint24[4] public tierFee;
 
+    /// @notice Next attestation number a trader may sign. Consumed on use so a
+    /// signature can never be presented twice.
+    mapping(address => uint256) public nonces;
+
     event Tolled(address indexed payer, uint8 tier, uint24 fee);
+    event Attested(address indexed trader, address indexed sender, uint256 nonce);
 
     error FeeTooHigh();
 
-    /// @dev Attestation(address trader,bytes32 poolId,uint256 deadline)
-    bytes32 private constant ATTESTATION_TYPEHASH =
-        keccak256("Attestation(address trader,bytes32 poolId,uint256 deadline)");
+    /// @dev Attestation(address trader,address sender,bytes32 poolId,uint256 nonce,uint256 deadline)
+    bytes32 private constant ATTESTATION_TYPEHASH = keccak256(
+        "Attestation(address trader,address sender,bytes32 poolId,uint256 nonce,uint256 deadline)"
+    );
 
     constructor(IPoolManager poolManager_, ITierOracle oracle_, uint24[4] memory fees)
         BaseHook(poolManager_)
@@ -81,34 +87,57 @@ contract Gantry is BaseHook, EIP712 {
     }
 
     /// @notice Digest a trader signs to be priced on their own history rather than their router's.
-    /// EIP-712 so a wallet can show what is being signed, and bound to this hook, this chain
-    /// and this pool so a signature cannot be replayed elsewhere.
-    function attestationDigest(address trader, PoolKey calldata key, uint256 deadline) public view returns (bytes32) {
+    /// EIP-712 so a wallet can show what is being signed. Bound to this hook, this chain and
+    /// this pool so it cannot be replayed elsewhere; bound to `sender` and a one-shot `nonce`
+    /// so it is worthless to anyone but the router the trader signed for, exactly once.
+    function attestationDigest(
+        address trader,
+        address sender,
+        PoolKey calldata key,
+        uint256 nonce,
+        uint256 deadline
+    ) public view returns (bytes32) {
         return _hashTypedDataV4(
-            keccak256(abi.encode(ATTESTATION_TYPEHASH, trader, PoolId.unwrap(key.toId()), deadline))
+            keccak256(
+                abi.encode(ATTESTATION_TYPEHASH, trader, sender, PoolId.unwrap(key.toId()), nonce, deadline)
+            )
         );
     }
 
     /// @dev Exposed only so the decode below can be attempted inside a try/catch.
-    function decodeAttestation(bytes calldata data) external pure returns (address, uint256, bytes memory) {
-        return abi.decode(data, (address, uint256, bytes));
+    function decodeAttestation(bytes calldata data)
+        external
+        pure
+        returns (address, uint256, uint256, bytes memory)
+    {
+        return abi.decode(data, (address, uint256, uint256, bytes));
     }
 
     /// @dev `sender` is whoever called the PoolManager, which for a shared router is the router
     /// itself. A trader behind one can sign an attestation to be scored as themselves. Anything
-    /// malformed, expired or unsigned quietly falls back to pricing the caller.
+    /// malformed, expired, replayed or unsigned quietly falls back to pricing the caller.
     function _resolvePayer(address sender, PoolKey calldata key, bytes calldata hookData)
         private
-        view
         returns (address)
     {
         if (hookData.length == 0) return sender;
 
-        try this.decodeAttestation(hookData) returns (address trader, uint256 deadline, bytes memory signature) {
+        try this.decodeAttestation(hookData) returns (
+            address trader, uint256 nonce, uint256 deadline, bytes memory signature
+        ) {
             if (block.timestamp > deadline) return sender;
+            // An attestation is only good for the next number this trader has not spent.
+            if (nonce != nonces[trader]) return sender;
+
             (address recovered, ECDSA.RecoverError err,) =
-                ECDSA.tryRecover(attestationDigest(trader, key, deadline), signature);
+                ECDSA.tryRecover(attestationDigest(trader, sender, key, nonce, deadline), signature);
             if (err != ECDSA.RecoverError.NoError || recovered != trader) return sender;
+
+            // Spend it, so the same signature cannot price a second swap.
+            unchecked {
+                nonces[trader] = nonce + 1;
+            }
+            emit Attested(trader, sender, nonce);
             return trader;
         } catch {
             return sender;
