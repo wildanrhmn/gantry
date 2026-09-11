@@ -1,0 +1,54 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--s5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 240ms ease, visibility 0s linear 240ms;
+}
+.scrim[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms ease, visibility 0s;
+}
+
+/* the review sits deepest and dims the page, the layers above only dim the review */
+.scrim[data-level="1"] {
+  z-index: 80;
+  background: rgba(8, 9, 13, 0.74);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.scrim[data-level="2"] { z-index: 90; background: rgba(8, 9, 13, 0.5); }
+.scrim[data-level="3"] { z-index: 100; background: rgba(8, 9, 13, 0.5); }
+
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: var(--s7);
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.95);
+  transform: translateY(14px) scale(0.97);
+  transition:
+    transform 320ms cubic-bezier(0.2, 0.85, 0.25, 1),
+    opacity 320ms ease,
+    filter 320ms ease;
+}
+.scrim[data-open="true"] .card { transform: none; }
+
+/* pushed back, not hidden: you can still see the trade you approved */
+.card[data-behind="true"] {
+  transform: translateY(-22px) scale(0.94);
+  opacity: 0.5;
+  filter: saturate(0.6);
+}
+
+@media (max-width: 460px) {
+  .card { padding: var(--s5); border-radius: 18px; }
+  .card[data-behind="true"] { transform: translateY(-16px) scale(0.95); }
+}

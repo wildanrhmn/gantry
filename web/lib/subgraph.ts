@@ -27,6 +27,7 @@ export interface TollRow {
   tier: number;
   fee: number;
   blockNumber: string;
+  timestamp: string;
   transactionHash: string;
   trader: { id: string };
 }
@@ -40,8 +41,17 @@ export interface VenueRow {
 export const recentTolls = (first = 12) =>
   querySubgraph<{ tolls: TollRow[] }>(
     `query($n: Int!) { tolls(first: $n, orderBy: blockNumber, orderDirection: desc) {
-       id tier fee blockNumber transactionHash trader { id } } }`,
+       id tier fee blockNumber timestamp transactionHash trader { id } } }`,
     { n: first },
+  );
+
+/** Every toll one address has been charged, newest first. */
+export const tollsFor = (id: string, first = 6) =>
+  querySubgraph<{ tolls: TollRow[] }>(
+    `query($id: String!, $n: Int!) {
+       tolls(where: { trader: $id }, first: $n, orderBy: blockNumber, orderDirection: desc) {
+         id tier fee blockNumber timestamp transactionHash trader { id } } }`,
+    { id: id.toLowerCase(), n: first },
   );
 
 export const venue = () =>

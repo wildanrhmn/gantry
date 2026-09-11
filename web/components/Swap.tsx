@@ -29,7 +29,11 @@ import {
 } from "@/lib/chain";
 import { useWallet } from "@/components/WalletProvider";
 import { tier as tierOf } from "@/lib/tiers";
-import { SwapProgress, type Phase, type Settled } from "@/components/SwapProgress";
+import { Review as ReviewModal } from "@/components/swap/Review";
+import { Running } from "@/components/swap/Running";
+import { Done } from "@/components/swap/Done";
+import { HistoryDrawer } from "@/components/swap/HistoryDrawer";
+import type { Phase, Review, Settled } from "@/components/swap/shared";
 import styles from "./Swap.module.css";
 
 const MAX_UINT = BigInt(
@@ -41,15 +45,14 @@ export function Swap() {
   const [balance, setBalance] = useState<bigint | null>(null);
   const [allowance, setAllowance] = useState<bigint | null>(null);
   const [amount, setAmount] = useState("1000");
+  const [landed, setLanded] = useState(0);
   const [attestation, setAttestation] = useState<Hex | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [settled, setSettled] = useState<Settled | null>(null);
   const [failedAt, setFailedAt] = useState<Phase | null>(null);
-  // Signing is free and instant, so it is on by default. Turning it off is how you
-  // see what a shared router pays.
-  const [priceAsMe, setPriceAsMe] = useState(true);
+  const [review, setReview] = useState<Review | null>(null);
   const [tier, setTier] = useState<number | null>(null);
   const [quote, setQuote] = useState<number | null>(null);
   const lastNonce = useRef<number | null>(null);
@@ -158,8 +161,6 @@ export function Swap() {
     return data;
   }, [account, wallet]);
 
-  const sign = () => run("sign", async () => void (await attest()));
-
   const swap = () =>
     run("swap", async () => {
       if (!account) return;
@@ -173,7 +174,7 @@ export function Swap() {
       try {
         // Sign first if the trader wants their own price. One popup, no gas, no wait.
         let hookData: Hex = attestation ?? "0x";
-        if (priceAsMe && !attestation) {
+        if (!attestation) {
           reached = "signing";
           setPhase("signing");
           hookData = await attest();
@@ -236,6 +237,7 @@ export function Swap() {
           });
         }
         setPhase("done");
+        setLanded((n) => n + 1);
         await refresh(account);
       } catch (e) {
         setFailedAt(reached);
@@ -245,6 +247,42 @@ export function Swap() {
     });
 
   const has = (v: bigint | null) => v !== null && v > BigInt(0);
+
+  /** The phases the cinematic layer owns. */
+  const running: Phase[] = ["signing", "confirming", "mining", "failed"];
+
+  const reviewOf = (): Review => ({
+    address: account ?? null,
+    tier: own,
+    fee: FEE_BPS[own] * 100,
+    amountIn: size,
+    quote: quoted ?? out(FEE_BPS[own]),
+    sellSymbol: SELL_SYMBOL,
+    buySymbol: BUY_SYMBOL,
+    sellIcon: "/tokens/usdc.svg",
+    buyIcon: "/tokens/eth.svg",
+  });
+
+  /** Closing the stack takes the form back to where it started. */
+  const reset = () => {
+    setPhase("idle");
+    setReview(null);
+    setSettled(null);
+    setFailedAt(null);
+    setError(null);
+    setAttestation(null);
+    setAmount("");
+    if (account) void refresh(account);
+  };
+
+  /** The swap is shown before it is signed, so nothing is committed unseen. */
+  const openReview = () => {
+    setError(null);
+    setSettled(null);
+    setFailedAt(null);
+    setReview(reviewOf());
+    setPhase("review");
+  };
 
   /** v4 packs both sides of a trade into one int256: amount0 high, amount1 low. */
   const unpack = (delta: bigint) => {
@@ -288,39 +326,19 @@ export function Swap() {
       live = false;
       clearTimeout(timer);
     };
-  }, [account, amount, attestation, allowance, priceAsMe]);
+  }, [account, amount, attestation, allowance]);
 
-  // Without an attestation the hook prices the router, which is nobody's history.
+  // Nobody who reaches the pool through a shared router has a history of their own,
+  // so that is what the hook charges without an attestation.
   const FEE_BPS = [5, 30, 60, 100];
   const own = tier ?? 1;
-  const pricedAs = priceAsMe ? own : 1;
   const size = Number(amount) || 0;
   const out = (bps: number) => size * (1 - bps / 10_000);
-  // Signed, show what you gain over everyone else. Unsigned, show what you are giving up.
-  const delta = priceAsMe
-    ? out(FEE_BPS[own]) - out(FEE_BPS[1])
-    : out(FEE_BPS[1]) - out(FEE_BPS[own]);
 
   // The pool is simulated with whatever hookData we hold, which is none until the swap
   // signs one. Price impact is the same either way, so the tier difference is exact.
   const quoted =
-    quote === null
-      ? null
-      : quote + (priceAsMe && !attestation ? (size * (FEE_BPS[1] - FEE_BPS[own])) / 10_000 : 0);
-
-  const TONE = ["var(--success)", "var(--fg-muted)", "var(--warning)", "var(--danger)"];
-  const TONE_SOFT = [
-    "rgba(116, 199, 154, 0.1)",
-    "rgba(220, 220, 227, 0.05)",
-    "rgba(224, 164, 88, 0.1)",
-    "rgba(226, 98, 76, 0.1)",
-  ];
-  const TONE_LINE = [
-    "rgba(116, 199, 154, 0.3)",
-    "rgba(220, 220, 227, 0.1)",
-    "rgba(224, 164, 88, 0.3)",
-    "rgba(226, 98, 76, 0.3)",
-  ];
+    quote === null ? null : quote + (attestation ? 0 : (size * (FEE_BPS[1] - FEE_BPS[own])) / 10_000);
 
   const enough = balance !== null && size > 0 && balance >= parseUnits(amount || "0", 18);
   const needsTokens = Boolean(account) && !enough;
@@ -335,7 +353,7 @@ export function Swap() {
         ? { label: busy === "mint" ? "Minting" : `Mint 1,000 ${SELL_SYMBOL}`, run: getTokens, ready: true }
         : needsApproval
           ? { label: busy === "approve" ? "Approving" : `Approve ${SELL_SYMBOL}`, run: approve, ready: true }
-          : { label: busy === "swap" ? "Swapping" : `Swap ${SELL_SYMBOL}`, run: swap, ready: size > 0 };
+          : { label: `Swap ${SELL_SYMBOL}`, run: openReview, ready: size > 0 };
 
   return (
     <div className={styles.stage}>
@@ -361,6 +379,7 @@ export function Swap() {
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
               inputMode="decimal"
+              placeholder="0"
               aria-label={`Amount of ${SELL_SYMBOL} to swap`}
             />
             <span className={styles.token}>
@@ -379,67 +398,13 @@ export function Swap() {
           </div>
           <div className={styles.legRow}>
             <span className={styles.out}>
-              {quoted !== null ? quoted.toFixed(4) : out(FEE_BPS[pricedAs]).toFixed(4)}
+              {quoted !== null ? quoted.toFixed(4) : out(FEE_BPS[own]).toFixed(4)}
             </span>
             <span className={styles.token}>
               <img className={styles.coin} src="/tokens/eth.svg" alt="" width={22} height={22} />
               {BUY_SYMBOL}
             </span>
           </div>
-        </div>
-
-        <div
-          className={styles.priced}
-          style={{
-            ["--tone" as string]: TONE[pricedAs],
-            ["--tone-soft" as string]: TONE_SOFT[pricedAs],
-            ["--tone-line" as string]: TONE_LINE[pricedAs],
-          }}
-        >
-          <div className={styles.pricedTop}>
-            <span className={styles.pricedLabel}>Priced as</span>
-            <span className={styles.chip}>
-              <span className={styles.dot} />
-              {tierOf(pricedAs).name}
-            </span>
-          </div>
-          <div className={styles.pricedWho}>
-            <span className={styles.who}>
-              {!account ? "connect to see your tier" : priceAsMe ? "you" : "the router"}
-            </span>
-            <span className={styles.fee}>{(FEE_BPS[pricedAs] / 100).toFixed(2)}%</span>
-          </div>
-
-          {account ? (
-            <div className={styles.compare}>
-              <span>
-                {priceAsMe
-                  ? `Against the ${(FEE_BPS[1] / 100).toFixed(2)}% everyone else pays`
-                  : `At your own tier (${tierOf(own).name}) you would keep more`}
-              </span>
-              <span className={styles.delta} data-sign={delta < 0 ? "worse" : undefined}>
-                {delta === 0 ? "no difference" : `${delta > 0 ? "+" : ""}${delta.toFixed(2)} ${BUY_SYMBOL}`}
-              </span>
-            </div>
-          ) : null}
-
-          {account ? (
-            <label className={styles.toggle}>
-              <input
-                type="checkbox"
-                checked={priceAsMe}
-                onChange={(e) => {
-                  setPriceAsMe(e.target.checked);
-                  if (!e.target.checked) setAttestation(null);
-                }}
-              />
-              <span className={styles.switch} />
-              <span>
-                Price me as myself
-                <em>signed when you swap, free and off chain</em>
-              </span>
-            </label>
-          ) : null}
         </div>
 
         <button className={styles.go} onClick={step.run} disabled={!step.ready || busy !== null}>
@@ -449,16 +414,31 @@ export function Swap() {
         {error ? <p className={styles.err}>{error}</p> : null}
       </div>
 
-      <SwapProgress
+      {/* three layers rather than one card that keeps changing its mind */}
+      <ReviewModal
+        open={phase !== "idle"}
+        behind={phase !== "review"}
+        data={review}
+        onConfirm={() => void (busy === null && swap())}
+        onCancel={reset}
+      />
+      <Running
+        open={running.includes(phase)}
         phase={phase}
         failedAt={failedAt}
+        tier={review?.tier ?? 1}
+        fee={review?.fee ?? 3000}
+        error={error}
+        onClose={reset}
+      />
+      <Done
+        open={phase === "done"}
+        data={review}
         settled={settled}
-        error={phase === "failed" ? error : null}
-        signed={priceAsMe}
-        symbol={BUY_SYMBOL}
-        onClose={() => setPhase("idle")}
+        onClose={reset}
       />
 
+      <HistoryDrawer account={account} landed={landed} />
 
       {!account ? (
         <p className={styles.note}>Sepolia only. The tokens mint freely, so this costs nothing but gas.</p>

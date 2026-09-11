@@ -1,0 +1,151 @@
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s4); }
+.title { font-size: 16px; font-weight: 600; color: var(--fg); }
+.sub {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.stage {
+  margin-top: var(--s5);
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  background: radial-gradient(120% 90% at 78% 10%, var(--tone-soft, transparent), transparent 62%), #0c0d12;
+  overflow: hidden;
+}
+.scene { display: block; width: 100%; height: auto; }
+
+/* the lane runs under the swap the whole time it is moving */
+.lane {
+  stroke-dasharray: 16 14;
+  animation: lane 760ms linear infinite;
+}
+@keyframes lane { to { stroke-dashoffset: -60; } }
+.stage[data-beat="0"] .lane { animation-play-state: paused; }
+.stage[data-failed="true"] .lane { animation-play-state: paused; stroke: #33363f; }
+
+/* the swap carries itself down the lane, one station at a time */
+.car {
+  transform: translateX(0);
+  transition: transform 1250ms cubic-bezier(0.42, 0, 0.18, 1);
+}
+.stage[data-beat="1"] .car { transform: translateX(118px); }
+.stage[data-beat="2"] .car { transform: translateX(262px); }
+
+.wake { opacity: 0; transition: opacity 400ms ease; }
+.stage[data-beat="1"] .wake,
+.stage[data-beat="2"] .wake { opacity: 1; }
+.stage[data-failed="true"] .wake { opacity: 0; }
+
+/* the attestation is the plate: fitted first, read later */
+.plate {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.stage[data-beat="0"] .plate { animation: fit 1400ms cubic-bezier(0.2, 0.85, 0.25, 1) 220ms infinite; }
+.stage[data-beat="1"] .plate,
+.stage[data-beat="2"] .plate { opacity: 1; }
+@keyframes fit {
+  0% { opacity: 0; transform: scale(0.4); }
+  35% { opacity: 1; transform: scale(1.15); }
+  55% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.25; transform: scale(1); }
+}
+
+.gantry { opacity: 0.9; }
+.sign { transition: stroke-opacity 500ms ease; }
+.stage[data-beat="2"] .sign {
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 9px var(--tone-soft));
+}
+
+.signIdle,
+.signFee {
+  font-family: var(--font-mono), monospace;
+  font-size: 15px;
+  transition: opacity 420ms ease;
+}
+.signIdle { fill: var(--fg-faint); letter-spacing: 1px; }
+.signFee { fill: var(--tone); opacity: 0; }
+/* the sign only lights once the frame has actually read the plate */
+.stage[data-beat="2"] .signIdle { opacity: 0; }
+.stage[data-beat="2"] .signFee { opacity: 1; animation: flicker 620ms steps(1) 520ms 1; }
+@keyframes flicker {
+  0%, 30% { opacity: 0; }
+  35%, 55% { opacity: 1; }
+  60%, 70% { opacity: 0; }
+  75%, 100% { opacity: 1; }
+}
+
+/* the read itself, sweeping down over the lane */
+.beam { opacity: 0; transform-box: fill-box; transform-origin: top; }
+.stage[data-beat="2"] .beam { animation: sweep 1500ms cubic-bezier(0.4, 0, 0.3, 1) 260ms infinite; }
+@keyframes sweep {
+  0% { opacity: 0; transform: scaleY(0.15); }
+  25% { opacity: 1; }
+  70% { opacity: 0.85; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+
+.beats { margin-top: var(--s5); display: flex; gap: 7px; }
+.tick {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  transition: background 480ms ease;
+}
+.tick[data-state="done"] { background: var(--success); }
+.tick[data-state="live"] {
+  background: linear-gradient(90deg, var(--accent), var(--accent-hi), var(--accent));
+  background-size: 200% 100%;
+  animation: slide 1400ms linear infinite;
+}
+.tick[data-state="failed"] { background: var(--danger); }
+@keyframes slide { to { background-position: -200% 0; } }
+
+/* one caption at a time, replaced rather than stacked */
+.caption {
+  margin-top: var(--s4);
+  min-height: 62px;
+  animation: swapIn 460ms cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+@keyframes swapIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.captionName { display: block; font-size: 15px; font-weight: 500; color: var(--fg); }
+.captionNote {
+  display: block;
+  margin-top: 5px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-dim);
+}
+
+.close {
+  margin-top: var(--s5);
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: transparent;
+  font-family: var(--font-body), sans-serif;
+  font-size: 14px;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.close:hover { color: var(--fg); border-color: var(--edge); }
+
+@media (max-width: 460px) {
+  .head { flex-direction: column; align-items: flex-start; gap: 7px; }
+  .caption { min-height: 74px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lane, .plate, .beam, .signFee, .tick[data-state="live"] { animation: none; }
+  .plate { opacity: 1; }
+}
