@@ -194,16 +194,16 @@ export function Swap() {
     });
 
   // Without an attestation the hook prices the router, which is nobody's history.
-  const pricedAs = attestation ? (tier ?? 1) : 1;
   const FEE_BPS = [5, 30, 60, 100];
-  const size = Number(amount) || 0;
-  const out = (bps: number) => (size * (1 - bps / 10_000)).toFixed(4);
-  // Unsigned, the honest comparison is what your own tier would have paid. Signed, it is
-  // what everyone else pays.
   const own = tier ?? 1;
+  const pricedAs = attestation ? own : 1;
+  const size = Number(amount) || 0;
+  const out = (bps: number) => size * (1 - bps / 10_000);
+  // Signed, show what you gain over everyone else. Unsigned, show what you are giving up.
   const delta = attestation
-    ? (size * (FEE_BPS[1] - FEE_BPS[pricedAs])) / 10_000
-    : (size * (FEE_BPS[own] - FEE_BPS[pricedAs])) / 10_000;
+    ? out(FEE_BPS[own]) - out(FEE_BPS[1])
+    : out(FEE_BPS[1]) - out(FEE_BPS[own]);
+
   const TONE = ["var(--success)", "var(--fg-muted)", "var(--warning)", "var(--danger)"];
   const TONE_SOFT = [
     "rgba(116, 199, 154, 0.1)",
@@ -219,86 +219,115 @@ export function Swap() {
   ];
 
   const has = (v: bigint | null) => v !== null && v > BigInt(0);
-  // Nothing is "done" until there is an account to have done it.
-  const needsTokens = !account || !has(balance);
-  const needsApproval = !account || (!needsTokens && !has(allowance));
+  const enough = balance !== null && size > 0 && balance >= parseUnits(amount || "0", 18);
+  const needsTokens = Boolean(account) && !enough;
+  const needsApproval = Boolean(account) && enough && !has(allowance);
+
+  /** The button is the state machine: it says the next thing that has to happen. */
+  const step = !account
+    ? { label: connecting ? "Connecting" : "Connect wallet", run: connect, ready: true }
+    : needsTokens
+      ? { label: busy === "mint" ? "Minting" : `Mint 1,000 ${SELL_SYMBOL}`, run: getTokens, ready: true }
+      : needsApproval
+        ? { label: busy === "approve" ? "Approving" : `Approve ${SELL_SYMBOL}`, run: approve, ready: true }
+        : { label: busy === "swap" ? "Swapping" : `Swap ${SELL_SYMBOL}`, run: swap, ready: size > 0 };
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.steps}>
-        <Step n={1} done={Boolean(account)} title="Connect a wallet"
-          sub={account ?? "Sepolia | nothing here costs real money"}
-          action={account ? null : { label: connecting ? "Connecting" : "Connect", onClick: connect, primary: true }} />
+    <div className={styles.stage}>
+      <div className={styles.card}>
+        <div className={styles.head}>
+          <span className={styles.title}>Swap</span>
+          <span className={styles.venue}>uniswap v4 · gantry pool</span>
+        </div>
 
-        <Step n={2} done={!needsTokens} title="Get test tokens"
-          sub={!account ? `1,000 ${SELL_SYMBOL}, free` : balance === null ? "reading" : `${Number(formatUnits(balance, 18)).toLocaleString()} ${SELL_SYMBOL}`}
-          action={account && needsTokens ? { label: busy === "mint" ? "Minting" : `Mint 1,000 ${SELL_SYMBOL}`, onClick: getTokens, primary: true } : null} />
+        <div className={styles.leg}>
+          <div className={styles.legTop}>
+            <span className={styles.legLabel}>You pay</span>
+            {balance !== null ? (
+              <span className={styles.legBal}>
+                {Number(formatUnits(balance, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                <button onClick={() => setAmount(formatUnits(balance, 18))}>max</button>
+              </span>
+            ) : null}
+          </div>
+          <div className={styles.legRow}>
+            <input
+              className={styles.input}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              inputMode="decimal"
+              aria-label={`Amount of ${SELL_SYMBOL} to swap`}
+            />
+            <span className={styles.token}>
+              <img className={styles.coin} src="/tokens/usdc.svg" alt="" width={22} height={22} />
+              {SELL_SYMBOL}
+            </span>
+          </div>
+        </div>
 
-        <Step n={3} done={!needsApproval && !needsTokens} title="Let the router move them"
-          sub={!account ? "one approval, once" : needsApproval ? "one approval, once" : "approved"}
-          action={account && needsApproval ? { label: busy === "approve" ? "Approving" : "Approve", onClick: approve, primary: true } : null} />
+        <div className={styles.hinge}><span>&darr;</span></div>
 
-        <Step n={4} done={Boolean(attestation)} title="Be priced as yourself"
-          sub={attestation ? "signed | the hook will read your address" : "optional: without it you are priced as the router"}
-          action={account ? { label: busy === "sign" ? "Signing" : attestation ? "Sign again" : "Sign", onClick: sign } : null} />
-      </div>
+        <div className={styles.leg}>
+          <div className={styles.legTop}>
+            <span className={styles.legLabel}>You receive, before gas</span>
+          </div>
+          <div className={styles.legRow}>
+            <span className={styles.out}>{out(FEE_BPS[pricedAs]).toFixed(4)}</span>
+            <span className={styles.token}>
+              <img className={styles.coin} src="/tokens/eth.svg" alt="" width={22} height={22} />
+              {BUY_SYMBOL}
+            </span>
+          </div>
+        </div>
 
-      <div className={styles.amount}>
-        <input className={styles.amountInput} value={amount} onChange={(e) => setAmount(e.target.value)}
-          inputMode="decimal" aria-label={`Amount of ${SELL_SYMBOL} to swap`} />
-        <span className={styles.sub}>{SELL_SYMBOL} → {BUY_SYMBOL}</span>
-        <button className={styles.act} data-primary="true" onClick={swap}
-          disabled={!account || needsTokens || needsApproval || busy !== null}>
-          {busy === "swap" ? "Swapping" : "Swap"}
-        </button>
-      </div>
-
-      {account ? (
         <div
-          className={styles.quote}
+          className={styles.priced}
           style={{
             ["--tone" as string]: TONE[pricedAs],
             ["--tone-soft" as string]: TONE_SOFT[pricedAs],
             ["--tone-line" as string]: TONE_LINE[pricedAs],
           }}
         >
-          <div className={styles.quoteTop}>
-            <span className={styles.quoteLabel}>You receive, before gas</span>
-            <span className={styles.quoteChip}>
-              <span className={styles.quoteDot} />
-              {tierOf(pricedAs).name} · {(FEE_BPS[pricedAs] / 100).toFixed(2)}%
+          <div className={styles.pricedTop}>
+            <span className={styles.pricedLabel}>Priced as</span>
+            <span className={styles.chip}>
+              <span className={styles.dot} />
+              {tierOf(pricedAs).name}
             </span>
           </div>
-
-          <div className={styles.quoteOut}>
-            <span className={styles.quoteBig}>{out(FEE_BPS[pricedAs])}</span>
-            <span className={styles.quoteUnit}>{BUY_SYMBOL}</span>
+          <div className={styles.pricedWho}>
+            <span className={styles.who}>
+              {!account ? "connect to see your tier" : attestation ? "you, signed" : "the router"}
+            </span>
+            <span className={styles.fee}>{(FEE_BPS[pricedAs] / 100).toFixed(2)}%</span>
           </div>
 
-          <div className={styles.quoteVs}>
-            <span>
-              {pricedAs === 1
-                ? `At your own tier (${tierOf(own).name}) you would get ${out(FEE_BPS[own])}`
-                : "Against the 0.30% everyone else pays"}
-            </span>
-            <span className={styles.quoteDelta} data-sign={delta < 0 ? "worse" : undefined}>
-              {delta === 0
-                ? "no difference"
-                : `${delta > 0 ? "+" : ""}${delta.toFixed(2)} ${BUY_SYMBOL}`}
-            </span>
-          </div>
+          {account ? (
+            <div className={styles.compare}>
+              <span>
+                {attestation
+                  ? `Against the ${(FEE_BPS[1] / 100).toFixed(2)}% everyone else pays`
+                  : `At your own tier (${tierOf(own).name}) you would get ${out(FEE_BPS[own]).toFixed(4)}`}
+              </span>
+              <span className={styles.delta} data-sign={delta < 0 ? "worse" : undefined}>
+                {delta === 0 ? "no difference" : `${delta > 0 ? "+" : ""}${delta.toFixed(2)} ${BUY_SYMBOL}`}
+              </span>
+            </div>
+          ) : null}
 
-          {!attestation ? (
-            <p className={styles.quoteWarn}>
-              Unsigned, so the hook sees the router and not you. Sign above to be priced on your
-              own history.
-            </p>
+          {account && !attestation ? (
+            <button className={styles.sign} onClick={sign} disabled={busy === "sign"}>
+              {busy === "sign" ? "Signing" : "Sign so the hook prices you, not the router"}
+            </button>
           ) : null}
         </div>
-      ) : null}
 
-      {error ? <p className={styles.err}>{error}</p> : null}
-      {!account ? <p className={styles.note}>Sepolia only. The tokens mint freely, so this costs nothing but gas.</p> : null}
+        <button className={styles.go} onClick={step.run} disabled={!step.ready || busy !== null}>
+          {step.label}
+        </button>
+
+        {error ? <p className={styles.err}>{error}</p> : null}
+      </div>
 
       {receipt ? (
         <div className={styles.receipt}>
@@ -306,40 +335,25 @@ export function Swap() {
             <span>Priced as</span><span>{receipt.pricedAs}</span>
           </div>
           <div className={styles.receiptRow}>
-            <span>Tier</span>
-            <span className={styles[`t${receipt.tier}`]}>{receipt.tier} · {tierOf(receipt.tier).name}</span>
+            <span>Tier</span><span>{receipt.tier} · {tierOf(receipt.tier).name}</span>
           </div>
           <div className={styles.receiptRow}>
-            <span>Fee charged</span>
-            <span className={styles[`t${receipt.tier}`]}>{(receipt.fee / 10_000).toFixed(2)}%</span>
+            <span>Fee charged</span><span>{(receipt.fee / 10_000).toFixed(2)}%</span>
           </div>
           <div className={styles.receiptRow}>
             <span>Transaction</span>
-            <span><a href={`https://sepolia.etherscan.io/tx/${receipt.hash}`} target="_blank" rel="noreferrer"
-              style={{ color: "var(--brand)" }}>{receipt.hash.slice(0, 18)}…</a></span>
+            <span>
+              <a href={`${CHAIN.blockExplorers?.default.url}/tx/${receipt.hash}`} target="_blank" rel="noreferrer">
+                view &#8599;
+              </a>
+            </span>
           </div>
         </div>
       ) : null}
-    </div>
-  );
-}
 
-function Step({ n, done, title, sub, action }: {
-  n: number; done: boolean; title: string; sub: string;
-  action: { label: string; onClick: () => void; primary?: boolean } | null;
-}) {
-  return (
-    <div className={styles.step} data-done={done}>
-      <span className={styles.num}>{done ? "✓" : `0${n}`}</span>
-      <div className={styles.what}>
-        <p className={styles.title}>{title}</p>
-        <p className={styles.sub}>{sub}</p>
-      </div>
-      {action ? (
-        <button className={styles.act} data-primary={action.primary} onClick={action.onClick}>
-          {action.label}
-        </button>
-      ) : <span />}
+      {!account ? (
+        <p className={styles.note}>Sepolia only. The tokens mint freely, so this costs nothing but gas.</p>
+      ) : null}
     </div>
   );
 }
