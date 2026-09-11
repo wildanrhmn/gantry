@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   decodeEventLog,
   formatUnits,
@@ -14,6 +14,7 @@ import {
   MIN_PRICE_LIMIT,
   MAX_PRICE_LIMIT,
   SELL,
+  BUY,
   SELL_IS_TOKEN0,
   SELL_SYMBOL,
   BUY_SYMBOL,
@@ -28,18 +29,12 @@ import {
 } from "@/lib/chain";
 import { useWallet } from "@/components/WalletProvider";
 import { tier as tierOf } from "@/lib/tiers";
+import { SwapProgress, type Phase, type Settled } from "@/components/SwapProgress";
 import styles from "./Swap.module.css";
 
 const MAX_UINT = BigInt(
   "115792089237316195423570985008687907853269984665640564039457584007913129639935",
 );
-
-interface Receipt {
-  tier: number;
-  fee: number;
-  hash: Hex;
-  pricedAs: Address;
-}
 
 export function Swap() {
   const { account, connecting, connect, wrongChain, switchChain, client: wallet } = useWallet();
@@ -49,9 +44,15 @@ export function Swap() {
   const [attestation, setAttestation] = useState<Hex | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [settled, setSettled] = useState<Settled | null>(null);
+  const [failedAt, setFailedAt] = useState<Phase | null>(null);
+  // Signing is free and instant, so it is on by default. Turning it off is how you
+  // see what a shared router pays.
+  const [priceAsMe, setPriceAsMe] = useState(true);
   const [tier, setTier] = useState<number | null>(null);
   const [quote, setQuote] = useState<number | null>(null);
+  const lastNonce = useRef<number | null>(null);
 
   const refresh = useCallback(async (who: Address) => {
     const [bal, allow] = await Promise.all([
@@ -82,7 +83,7 @@ export function Swap() {
     return () => {
       live = false;
     };
-  }, [account, receipt]);
+  }, [account, settled]);
 
   async function run(label: string, fn: () => Promise<void>) {
     setError(null);
@@ -122,76 +123,125 @@ export function Swap() {
     });
 
   // Without this the hook only sees the router, so everyone behind it shares one tier.
-  const sign = () =>
-    run("sign", async () => {
-      if (!account) return;
-      const client = wallet();
-      const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
-      // The hook only accepts the next number this trader has not spent, so read it fresh.
-      const nonce = (await publicClient.readContract({
-        address: ADDRESSES.gantry,
-        abi: gantryAbi,
-        functionName: "nonces",
-        args: [account],
-      })) as bigint;
+  /** Returns the hookData the hook will read, signing one if we do not have it yet. */
+  const attest = useCallback(async (): Promise<Hex> => {
+    if (!account) return "0x";
+    const client = wallet();
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
+    // The hook only accepts the next number this trader has not spent, so read it fresh.
+    const nonce = (await publicClient.readContract({
+      address: ADDRESSES.gantry,
+      abi: gantryAbi,
+      functionName: "nonces",
+      args: [account],
+    })) as bigint;
 
-      const signature = await client.signTypedData({
-        account,
-        domain: { name: "Gantry", version: "1", chainId: CHAIN.id, verifyingContract: ADDRESSES.gantry },
-        types: {
-          Attestation: [
-            { name: "trader", type: "address" },
-            { name: "sender", type: "address" },
-            { name: "poolId", type: "bytes32" },
-            { name: "nonce", type: "uint256" },
-            { name: "deadline", type: "uint256" },
-          ],
-        },
-        primaryType: "Attestation",
-        message: { trader: account, sender: ADDRESSES.router, poolId: poolId(), nonce, deadline },
-      });
-      setAttestation(encodeAttestation(account, nonce, deadline, signature));
+    const signature = await client.signTypedData({
+      account,
+      domain: { name: "Gantry", version: "1", chainId: CHAIN.id, verifyingContract: ADDRESSES.gantry },
+      types: {
+        Attestation: [
+          { name: "trader", type: "address" },
+          { name: "sender", type: "address" },
+          { name: "poolId", type: "bytes32" },
+          { name: "nonce", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+        ],
+      },
+      primaryType: "Attestation",
+      message: { trader: account, sender: ADDRESSES.router, poolId: poolId(), nonce, deadline },
     });
+    const data = encodeAttestation(account, nonce, deadline, signature);
+    setAttestation(data);
+    setSettled((prev) => (prev ? { ...prev, nonce: Number(nonce) } : prev));
+    lastNonce.current = Number(nonce);
+    return data;
+  }, [account, wallet]);
+
+  const sign = () => run("sign", async () => void (await attest()));
 
   const swap = () =>
     run("swap", async () => {
       if (!account) return;
       const client = wallet();
-      const hash = await client.writeContract({
-        account,
-        address: ADDRESSES.router,
-        abi: routerAbi,
-        functionName: "swap",
-        args: [
-          POOL_KEY,
-          {
-            zeroForOne: SELL_IS_TOKEN0,
-            amountSpecified: -parseUnits(amount || "1", 18),
-            sqrtPriceLimitX96: SELL_IS_TOKEN0 ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT,
-          },
-          { takeClaims: false, settleUsingBurn: false },
-          attestation ?? "0x",
-        ],
-        chain: CHAIN,
-      });
-      const rec = await publicClient.waitForTransactionReceipt({ hash });
-      setAttestation(null);
-      const tolled = rec.logs
-        .filter((l) => l.address.toLowerCase() === ADDRESSES.gantry.toLowerCase())
-        .map((l) => {
-          try {
-            return decodeEventLog({ abi: gantryAbi, data: l.data, topics: l.topics });
-          } catch {
-            return null;
-          }
-        })
-        .find((d) => d?.eventName === "Tolled");
+      setSettled(null);
+      setError(null);
+      setFailedAt(null);
+      lastNonce.current = null;
+      let reached: Phase = "signing";
 
-      if (tolled?.args) {
-        const args = tolled.args as unknown as { payer: Address; tier: number; fee: number };
-        setReceipt({ tier: args.tier, fee: args.fee, hash, pricedAs: args.payer });
+      try {
+        // Sign first if the trader wants their own price. One popup, no gas, no wait.
+        let hookData: Hex = attestation ?? "0x";
+        if (priceAsMe && !attestation) {
+          reached = "signing";
+          setPhase("signing");
+          hookData = await attest();
+        }
+
+        const before = (await publicClient.readContract({
+          address: BUY, abi: erc20Abi, functionName: "balanceOf", args: [account],
+        })) as bigint;
+
+        reached = "confirming";
+        setPhase("confirming");
+        const hash = await client.writeContract({
+          account,
+          address: ADDRESSES.router,
+          abi: routerAbi,
+          functionName: "swap",
+          args: [
+            POOL_KEY,
+            {
+              zeroForOne: SELL_IS_TOKEN0,
+              amountSpecified: -parseUnits(amount || "1", 18),
+              sqrtPriceLimitX96: SELL_IS_TOKEN0 ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT,
+            },
+            { takeClaims: false, settleUsingBurn: false },
+            hookData,
+          ],
+          chain: CHAIN,
+        });
+
+        reached = "mining";
+        setPhase("mining");
+        const rec = await publicClient.waitForTransactionReceipt({ hash });
+        setAttestation(null);
+
+        const after = (await publicClient.readContract({
+          address: BUY, abi: erc20Abi, functionName: "balanceOf", args: [account],
+        })) as bigint;
+
+        const tolled = rec.logs
+          .filter((l) => l.address.toLowerCase() === ADDRESSES.gantry.toLowerCase())
+          .map((l) => {
+            try {
+              return decodeEventLog({ abi: gantryAbi, data: l.data, topics: l.topics });
+            } catch {
+              return null;
+            }
+          })
+          .find((d) => d?.eventName === "Tolled");
+
+        if (tolled?.args) {
+          const args = tolled.args as unknown as { payer: Address; tier: number; fee: number };
+          setSettled({
+            tier: args.tier,
+            fee: args.fee,
+            payer: args.payer,
+            // Only true when the hook actually accepted and spent the attestation.
+            nonce: args.payer.toLowerCase() === account.toLowerCase() ? lastNonce.current : null,
+            received: Number(formatUnits(after - before, 18)),
+            hash,
+          });
+        }
+        setPhase("done");
+        await refresh(account);
+      } catch (e) {
+        setFailedAt(reached);
+        setPhase("failed");
+        throw e;
       }
-      await refresh(account);
     });
 
   const has = (v: bigint | null) => v !== null && v > BigInt(0);
@@ -238,18 +288,25 @@ export function Swap() {
       live = false;
       clearTimeout(timer);
     };
-  }, [account, amount, attestation, allowance]);
+  }, [account, amount, attestation, allowance, priceAsMe]);
 
   // Without an attestation the hook prices the router, which is nobody's history.
   const FEE_BPS = [5, 30, 60, 100];
   const own = tier ?? 1;
-  const pricedAs = attestation ? own : 1;
+  const pricedAs = priceAsMe ? own : 1;
   const size = Number(amount) || 0;
   const out = (bps: number) => size * (1 - bps / 10_000);
   // Signed, show what you gain over everyone else. Unsigned, show what you are giving up.
-  const delta = attestation
+  const delta = priceAsMe
     ? out(FEE_BPS[own]) - out(FEE_BPS[1])
     : out(FEE_BPS[1]) - out(FEE_BPS[own]);
+
+  // The pool is simulated with whatever hookData we hold, which is none until the swap
+  // signs one. Price impact is the same either way, so the tier difference is exact.
+  const quoted =
+    quote === null
+      ? null
+      : quote + (priceAsMe && !attestation ? (size * (FEE_BPS[1] - FEE_BPS[own])) / 10_000 : 0);
 
   const TONE = ["var(--success)", "var(--fg-muted)", "var(--warning)", "var(--danger)"];
   const TONE_SOFT = [
@@ -318,11 +375,11 @@ export function Swap() {
         <div className={styles.leg}>
           <div className={styles.legTop}>
             <span className={styles.legLabel}>You receive, before gas</span>
-            {quote === null ? <span className={styles.legBal}>estimate</span> : null}
+            {quoted === null ? <span className={styles.legBal}>estimate</span> : null}
           </div>
           <div className={styles.legRow}>
             <span className={styles.out}>
-              {quote !== null ? quote.toFixed(4) : out(FEE_BPS[pricedAs]).toFixed(4)}
+              {quoted !== null ? quoted.toFixed(4) : out(FEE_BPS[pricedAs]).toFixed(4)}
             </span>
             <span className={styles.token}>
               <img className={styles.coin} src="/tokens/eth.svg" alt="" width={22} height={22} />
@@ -348,7 +405,7 @@ export function Swap() {
           </div>
           <div className={styles.pricedWho}>
             <span className={styles.who}>
-              {!account ? "connect to see your tier" : attestation ? "you, signed" : "the router"}
+              {!account ? "connect to see your tier" : priceAsMe ? "you" : "the router"}
             </span>
             <span className={styles.fee}>{(FEE_BPS[pricedAs] / 100).toFixed(2)}%</span>
           </div>
@@ -356,7 +413,7 @@ export function Swap() {
           {account ? (
             <div className={styles.compare}>
               <span>
-                {attestation
+                {priceAsMe
                   ? `Against the ${(FEE_BPS[1] / 100).toFixed(2)}% everyone else pays`
                   : `At your own tier (${tierOf(own).name}) you would keep more`}
               </span>
@@ -366,10 +423,22 @@ export function Swap() {
             </div>
           ) : null}
 
-          {account && !attestation ? (
-            <button className={styles.sign} onClick={sign} disabled={busy === "sign"}>
-              {busy === "sign" ? "Signing" : "Sign so the hook prices you, not the router"}
-            </button>
+          {account ? (
+            <label className={styles.toggle}>
+              <input
+                type="checkbox"
+                checked={priceAsMe}
+                onChange={(e) => {
+                  setPriceAsMe(e.target.checked);
+                  if (!e.target.checked) setAttestation(null);
+                }}
+              />
+              <span className={styles.switch} />
+              <span>
+                Price me as myself
+                <em>signed when you swap, free and off chain</em>
+              </span>
+            </label>
           ) : null}
         </div>
 
@@ -380,27 +449,16 @@ export function Swap() {
         {error ? <p className={styles.err}>{error}</p> : null}
       </div>
 
-      {receipt ? (
-        <div className={styles.receipt}>
-          <div className={styles.receiptRow}>
-            <span>Priced as</span><span>{receipt.pricedAs}</span>
-          </div>
-          <div className={styles.receiptRow}>
-            <span>Tier</span><span>{receipt.tier} · {tierOf(receipt.tier).name}</span>
-          </div>
-          <div className={styles.receiptRow}>
-            <span>Fee charged</span><span>{(receipt.fee / 10_000).toFixed(2)}%</span>
-          </div>
-          <div className={styles.receiptRow}>
-            <span>Transaction</span>
-            <span>
-              <a href={`${CHAIN.blockExplorers?.default.url}/tx/${receipt.hash}`} target="_blank" rel="noreferrer">
-                view &#8599;
-              </a>
-            </span>
-          </div>
-        </div>
-      ) : null}
+      <SwapProgress
+        phase={phase}
+        failedAt={failedAt}
+        settled={settled}
+        error={phase === "failed" ? error : null}
+        signed={priceAsMe}
+        symbol={BUY_SYMBOL}
+        onClose={() => setPhase("idle")}
+      />
+
 
       {!account ? (
         <p className={styles.note}>Sepolia only. The tokens mint freely, so this costs nothing but gas.</p>
