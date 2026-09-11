@@ -1,4 +1,3 @@
-import attempts from "@/data/failed-attempts.json";
 import { traderInPool } from "@/lib/subgraph";
 import {
   mainnetTrader,
@@ -8,22 +7,10 @@ import {
   type MainnetTrader,
 } from "@/lib/mainnet";
 import { ADDRESSES, oracleAbi, publicClient } from "@/lib/chain";
+import { revertedFor, revertedTotals } from "@/lib/attempts";
 import { buildObservations } from "@/lib/observations";
 import { isAddress, type Lookup, type Tier } from "@/lib/tiers";
 
-/**
- * Transactions that reached the PoolManager and reverted, per address. This is the one
- * number on the page a subgraph cannot produce: event handlers only run on receipts of
- * successful transactions, so a reverted attempt emits nothing to index. It comes from
- * the Substreams module, which reads transaction traces and sees the failures too.
- */
-const failed = new Map(Object.entries(attempts.perAddress as Record<string, number>));
-
-/** How many of this address's transactions reached the PoolManager and reverted. */
-export const revertedFor = (address: string) => failed.get(address.toLowerCase()) ?? 0;
-
-/** Every reverted attempt in the scan. Read from the artifact, never typed into the copy. */
-export const revertedTotal = Number(attempts.total ?? 0);
 
 export interface ScanWindow {
   fromBlock: number;
@@ -37,11 +24,11 @@ export interface ScanWindow {
 
 /** Where the indexer has got to. Read per request, so the numbers move with the chain. */
 export async function scanWindow(): Promise<ScanWindow> {
-  const totals = await scanTotals();
+  const [totals, reverted] = await Promise.all([scanTotals(), revertedTotals()]);
   if (!totals) {
     return {
       fromBlock: 0, toBlock: 0, swaps: 0, sandwiches: 0,
-      addresses: 0, reverted: revertedTotal, live: false,
+      addresses: 0, reverted: reverted.total, live: false,
     };
   }
   return {
@@ -50,7 +37,7 @@ export async function scanWindow(): Promise<ScanWindow> {
     swaps: Number(totals.swaps),
     sandwiches: Number(totals.sandwiches),
     addresses: Number(totals.addresses),
-    reverted: revertedTotal,
+    reverted: reverted.total,
     live: true,
   };
 }
@@ -83,7 +70,7 @@ export async function lookup(address: string): Promise<Lookup | null> {
     tier: (onChain ?? row?.tier ?? 1) as Tier,
     scored: Boolean(row),
     sharedInfrastructure: Boolean(row?.sharedInfrastructure),
-    observations: row ? buildObservations(row, revertedFor(address)) : [],
+    observations: row ? buildObservations(row, await revertedFor(address)) : [],
     poolSwaps: pool?.trader ? Number(pool.trader.swaps) : null,
     source,
   };

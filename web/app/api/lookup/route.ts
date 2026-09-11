@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { revertedFor, scanWindow } from "@/lib/lookup";
+import { revertedFor } from "@/lib/attempts";
+import { scanWindow } from "@/lib/lookup";
 import { mainnetTrader } from "@/lib/mainnet";
 import { traderInPool } from "@/lib/subgraph";
 import { isAddress } from "@/lib/tiers";
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
   }
 
   if (part === "attempts") {
-    return NextResponse.json({ reverted: revertedFor(address) });
+    return NextResponse.json({ reverted: await revertedFor(address) });
   }
 
   if (part === "pool") {
