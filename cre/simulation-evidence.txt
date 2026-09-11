@@ -1,15 +1,18 @@
 Gantry - Chainlink CRE Confidential Workflow
-Captured 2026-09-11 13:05 UTC by: cre workflow simulate --target staging-settings gantry-scoring
+Captured 2026-09-11 20:30 UTC by: cre workflow simulate --target staging-settings gantry-scoring
 
 The confidential handler scores addresses inside the enclave. The thresholds that
 decide a tier are fetched as a secret in the TEE and never leave it; the scoring
 rules themselves are public in scoring.ts. The tier the enclave returns is what the
 Uniswap v4 hook charges, so the confidential part is the product, not a placeholder.
 
-Inputs read inside the enclave:
+Inputs read inside the enclave, both live:
   behaviour  https://api.studio.thegraph.com/query/1760064/gantry-mainnet/v0.0.2
-  traces     raw.githubusercontent.com/wildanrhmn/gantry/master/web/data/failed-attempts.json
-  secret     gantry_scoring_params  (tier thresholds)
+             the mainnet subgraph, queried at run time
+  traces     https://gantry-hook.vercel.app/api/traces
+             reverted attempts, read from the Substreams sink. A reverted transaction
+             emits no logs, so this is the one input no subgraph can produce.
+  secret     gantry_scoring_params  (tier thresholds, fetched with runtime.getSecrets)
 
 ----------------------------------------------------------------------
 Compiling workflow...
@@ -17,10 +20,10 @@ Compiling workflow...
 ✓ Simulation limits enabled
   HTTP: req=120kb resp=250kb timeout=10s | ConfHTTP: req=125kb resp=500kb timeout=1m30s | Consensus obs=25kb | ChainWrite evm_report=50kb evm_gas=10000000 solana_report=265b solana_cu=300000 | WASM binary=100mb compressed=20mb
   Binary hash: 9a07eebd18c1c8f9ba5da816869a36861e0b7732d96e2ae45be870d1fb54a169
-  Config hash: ded955476e2ba06975fdca40d97a776a45277ad0dca4d468801589ca6c4992a1
-2026-09-11T20:00:58Z [SIMULATION] Simulator Initialized
+  Config hash: a4b99d9dc46979e8e2f7d3dd73214a5254b0f1327e68065c01a94fed909db918
+2026-09-12T03:30:40Z [SIMULATION] Simulator Initialized
 
-2026-09-11T20:00:58Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0
+2026-09-12T03:30:40Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0
 
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ Handler requested TEE Execution                                                                    │
@@ -31,14 +34,14 @@ Compiling workflow...
 │                                                                                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-2026-09-11T20:01:00Z [USER LOG] gantry-secrets-ok
-2026-09-11T20:01:01Z [USER LOG] gantry-scored addresses=13 of=50
+2026-09-12T03:45:00Z [USER LOG] gantry-secrets-ok
+2026-09-12T03:45:01Z [USER LOG] gantry-scored addresses=12 of=50
 
 ✓ Workflow Simulation Result:
 "0x0000000000000000000000000000000000000000000000000000000000000000"
 
-2026-09-11T20:01:01Z [SIMULATION] Execution finished signal received
-2026-09-11T20:01:01Z [SIMULATION] Skipping WorkflowEngineV2
+2026-09-12T03:45:01Z [SIMULATION] Execution finished signal received
+2026-09-12T03:45:01Z [SIMULATION] Skipping WorkflowEngineV2
 
 ╭──────────────────────────────────────────────────────╮
 │ Simulation complete! Ready to deploy your workflow?  │

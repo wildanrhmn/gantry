@@ -142,9 +142,9 @@ Nothing on the site is read from a checked-in dataset. The lookup, the toll feed
 totals are all queries made when the request arrives - the subgraphs over GraphQL, the trace
 counts from the sink described below.
 
-The CRE enclave reads the behaviour subgraph live on its own schedule. Its second input, the
-reverted-attempt counts, is still the published snapshot rather than the sink, because the
-workflow fetches a URL rather than holding a database connection.
+The CRE enclave reads both of its inputs live on its own schedule: the behaviour subgraph over
+GraphQL, and the reverted-attempt counts from the sink through `/api/traces`, which exists
+because the workflow fetches a URL from inside the enclave and needs TLS to do it.
 
 ### The part only Substreams can do
 
