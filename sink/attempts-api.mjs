@@ -56,6 +56,21 @@ const totals = () =>
     return { source: "substreams:map_attempts", live: true, total, byStatus, addresses: addresses ?? 0, fromBlock: lo ?? 0, toBlock: hi ?? 0 };
   });
 
+/** The whole map, in the shape the published snapshot uses, so anything reading that file
+ *  can read this instead without changing how it parses. */
+const everything = () =>
+  cached("all", async () => {
+    const base = await totals();
+    const { rows } = await pool.query(
+      "SELECT contract, count(*)::int AS n FROM public.attempt GROUP BY contract ORDER BY 2 DESC",
+    );
+    return {
+      ...base,
+      note: "Transactions that reached the v4 PoolManager and did not succeed. Derived from transaction traces, which is why no subgraph can reproduce this.",
+      perAddress: Object.fromEntries(rows.map((r) => [r.contract, r.n])),
+    };
+  });
+
 const forAddress = (address) =>
   cached(`a:${address}`, async () => {
     const { rows } = await pool.query(
@@ -77,6 +92,7 @@ createServer(async (req, res) => {
     if (!allowed(ip)) return send(429, { error: "slow down" });
     // A wrong key looks the same as a wrong path, so scanning learns nothing.
     if (KEY && req.headers["x-gantry-key"] !== KEY) return send(404, { error: "not found" });
+    if (url.pathname === "/attempts/all") return send(200, await everything());
     if (url.pathname === "/attempts") {
       const a = url.searchParams.get("address");
       return send(200, a ? await forAddress(a.toLowerCase()) : await totals());
