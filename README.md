@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://gantry-hook.vercel.app">Live app</a> ·
+  <a href="https://www.gantryhook.xyz">Live app</a> ·
   <a href="https://sepolia.etherscan.io/address/0x4e6D007c91aB5491c1De9E491f18fbE18ACC8080">Hook</a> ·
   <a href="https://substreams.dev/packages/gantry/v0.1.0">Substreams package</a> ·
   <a href="FEEDBACK.md">Feedback on v4</a>
@@ -246,7 +246,7 @@ is the number the hook charges. Simulation output is in
 | `sink/` | streams `map_attempts` into Postgres and serves the counts |
 | `cre/` | the confidential scoring workflow |
 | `scorer/` | the scoring rules, and their tests |
-| `web/` | the app at [gantry-hook.vercel.app](https://gantry-hook.vercel.app) |
+| `web/` | the app at [www.gantryhook.xyz](https://www.gantryhook.xyz) |
 | `mcp/` | ask an MCP client why an address pays what it pays |
 
 ## Setup

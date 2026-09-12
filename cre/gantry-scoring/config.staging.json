@@ -1,7 +1,7 @@
 {
   "schedule": "0 */15 * * * *",
   "subgraph_url": "https://api.studio.thegraph.com/query/1760064/gantry-mainnet/v0.0.2",
-  "traces_url": "https://gantry-hook.vercel.app/api/traces",
+  "traces_url": "https://www.gantryhook.xyz/api/traces",
   "secrets_ids": {
     "scoring_params_id": "gantry_scoring_params"
   },
