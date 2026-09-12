@@ -22,6 +22,7 @@ cre/**/node_modules/
 GANTRY.md
 IDEAS.md
 DEPLOYED.md
+DEMO.md
 cre/**/.cre_build_tmp.js
 design/
 web/.next/
