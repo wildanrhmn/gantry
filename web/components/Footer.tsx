@@ -1,4 +1,5 @@
 import { ADDRESSES } from "@/lib/chain";
+import { GantryMark } from "@/components/GantryMark";
 import styles from "./Footer.module.css";
 
 const GITHUB = "https://github.com/wildanrhmn/gantry";
@@ -8,7 +9,7 @@ export function Footer() {
     <footer className={styles.foot}>
       <div className={styles.inner}>
         <span className={styles.who}>
-          <span className={styles.mark} />
+          <GantryMark size={17} className={styles.mark} reader="var(--accent)" />
           <span className={styles.name}>GANTRY</span>
           <span>| a Uniswap v4 hook that prices each swap by the caller</span>
         </span>

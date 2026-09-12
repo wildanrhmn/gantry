@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AccountMenu } from "@/components/AccountMenu";
+import { GantryMark } from "@/components/GantryMark";
 import styles from "./Nav.module.css";
 
 const LINKS = [
@@ -42,7 +43,10 @@ export function Nav() {
     <div className={styles.wrap}>
       <div className={styles.col}>
         <nav className={styles.bar} data-lifted={lifted}>
-          <Link href="/" className={styles.brand}>GANTRY</Link>
+          <Link href="/" className={styles.brand}>
+            <GantryMark size={22} reader="var(--accent)" />
+            GANTRY
+          </Link>
 
           <div className={styles.links}>
             {LINKS.map((l) => (

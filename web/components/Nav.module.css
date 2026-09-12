@@ -50,6 +50,9 @@
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-family: var(--font-display), sans-serif;
   font-variation-settings: "wdth" 120;
   font-weight: 800;
