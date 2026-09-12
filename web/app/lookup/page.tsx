@@ -17,7 +17,7 @@ export default async function LookupPage() {
         <h1 className={styles.title}>What would this address pay?</h1>
         <p className={styles.body}>
           Paste any address. Gantry shows the behaviour it was scored on, the tier that behaviour
-          earns, and the fee that tier pays | with the evidence, not just the verdict.
+          earns, and the fee that tier pays, with the evidence, not just the verdict.
         </p>
         <div className={styles.field}>
           <Suspense fallback={null}>

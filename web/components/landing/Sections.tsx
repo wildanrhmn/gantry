@@ -129,7 +129,7 @@ export function Proof() {
             Same pool. Same size. <em>Six times</em> the price.
           </h2>
           <p className={`${styles.body} ${styles.leadBody}`}>
-            Three tolls charged on a live v4 pool. Nothing was blocked | only priced.
+            Three tolls charged on a live v4 pool. Nothing was blocked, only priced.
           </p>
         </Reveal>
 
@@ -180,7 +180,7 @@ const STACK = [
     role: "Data",
     logo: "/brands/grt.svg",
     hue: "rgba(103, 76, 221, 0.18)",
-    body: "Nine Substreams modules published to the registry, plus two subgraphs read live on every request | mainnet behaviour, and Gantry\u2019s own tolls.",
+    body: "Nine Substreams modules published to the registry, plus two subgraphs read live on every request: mainnet behaviour, and Gantry\u2019s own tolls.",
     href: "https://substreams.dev/packages/gantry/v0.1.0",
     link: "substreams.dev/gantry",
   },

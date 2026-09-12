@@ -280,16 +280,16 @@ export function Scanner() {
               {/* the oracle and the mainnet scan are different questions, so say which answered */}
               {result.onChain && !result.scored ? (
                 <p className={styles.notice}>
-                  This tier is published on the oracle, so it is what the pool would charge. It
-                  did not come from the mainnet scan below | this address did no trading in the
-                  scanned window.
+                  This tier is published on the oracle, so it is what the pool would charge. It did
+                  not come from the mainnet scan below, because this address did no trading in
+                  the scanned window.
                 </p>
               ) : null}
 
               {!result.onChain ? (
                 <p className={styles.notice}>
                   Nobody has scored this address, so the oracle returns the default tier. Unknown
-                  is not the same as clean | it means no judgement has been made.
+                  is not the same as clean; it means no judgement has been made.
                 </p>
               ) : null}
 
